@@ -293,6 +293,50 @@ specport skill list
 specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
+## Value thesis and adoption bar
+
+SpecPort has high potential value, but its value is concentrated in a sharper
+job than the long-term vision suggests. The market already has several tools
+that turn a prompt into requirements, a plan, tasks, and implementation. Do
+not position SpecPort as another generic spec-driven coding framework.
+
+The near-term buyer is an AI-native maintainer, founder, or agency shipping a
+change in an existing repository where an unreviewed file, invented product
+decision, provenance mistake, or false sense of completion is costly. The
+near-term job is:
+
+> After an AI agent finishes, prove that the exact final tree is understood,
+> covered by the approved review source, and still consistent with the human
+> contract before merge or release.
+
+The current foundation is a credible evidence layer for that job, not yet a
+magic builder. For a solo vibe coder, a repo packet that only produces an
+inventory and asks for more human decisions can feel like ceremony. It earns
+strong value only when it catches something that would otherwise have escaped
+review or makes the merge/release decision materially safer.
+
+The product earns a claim of substantial value when these adoption tests are
+true:
+
+- one low-friction post-agent command or host-agent hook produces a
+  merge-ready receipt containing final-tree coverage, contract status, test and
+  artifact evidence, and lock/drift state;
+- the receipt catches hidden or unreviewed files, contract gaps, provenance
+  problems, or release risks in real changes, rather than merely restating an
+  inventory;
+- Claude, Codex, Cursor, and CI users can consume the result through native
+  integrations instead of copying a packet between tools;
+- a pilot across 10--20 real AI-made changes measures findings, false
+  positives, added review time, and whether a human changed a merge decision;
+- at least three external maintainers, or one small engineering team, use the
+  workflow repeatedly before SpecPort expands into a public registry,
+  ratings, or broad code-generating adapters.
+
+Until those tests are met, lead with the narrow promise: **AI agents make code
+fast; SpecPort proves the final tree before merge.** Treat portable specs,
+cover/remix, discovery, and code generation as the expansion path that this
+trust layer can earn, not as proof of present adoption.
+
 The create, check, discover, bundle, validate, pull, map, skill list, skill
 export, lock, drift, and bounded lifecycle artifact commands are implemented
 and tested in the current foundation. Bundle writes a complete draft-only repo-to-spec
