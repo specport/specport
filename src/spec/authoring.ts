@@ -168,6 +168,12 @@ export async function checkSpecFile(path: string): Promise<SpecCheckResult> {
     };
   }
 
+  return checkSpecText(absolute, text);
+}
+
+export function checkSpecText(path: string, text: string): SpecCheckResult {
+  const absolute = resolve(path);
+
   const sections = {
     intent: hasHeading(text, 'intent'),
     behavior: hasHeading(text, 'behavior|workflow|capability'),

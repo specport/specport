@@ -65,13 +65,12 @@ system.
 ### 2. Generate the baseline artifacts before interpreting them
 
 Run from the repository root. For an installed CLI, pin the package version in
-the target repository before running it:
+the target repository before running it. The one-command packet is the
+preferred first pass:
 
 ```text
 npm install --save-dev --exact @specport/specport@<version>
-npx --no-install specport spec discover . --write SPEC.md
-npx --no-install specport spec discover . --json --write .specport/repository-baseline.json
-npx --no-install specport spec map . --json --write .specport/repo-map.json
+npx --no-install specport spec bundle .
 ```
 
 When working in the SpecPort checkout itself, build first and use the local
@@ -79,19 +78,24 @@ binary instead:
 
 ```text
 npm run build
-node dist/cli.js spec discover . --write SPEC.md
-node dist/cli.js spec discover . --json --write .specport/repository-baseline.json
-node dist/cli.js spec map . --json --write .specport/repo-map.json
+node dist/cli.js spec bundle .
 ```
 
-The first command creates the human-readable observed draft. The second saves
-the complete machine-readable baseline. The CLI also prints its result; the
-saved files are the durable evidence artifacts. A baseline is an observation,
-not a product contract, and its checks are discovered rather than run. The map
-is a separate bounded static artifact: it records file roles, simple symbols,
-local import edges, callable surfaces, scan limits, and unknowns. It never
-executes repository code and must not be presented as a runtime or intent
-proof.
+The packet writes the human-readable `SPEC.md`, machine-readable baseline and
+map, an evidence ledger, a structural spec-check result, and
+`.specport/repo-to-spec/packet.json` with output hashes. It also prints the
+result. Exit code `5` is expected for a draft-only packet: the generated
+artifacts are useful evidence, but a human must still decide intent, acceptance,
+taste, release, and ship authority. A packet is an observation, not a product
+contract, and its checks are discovered rather than run. The map remains a
+separate bounded static artifact: it records file roles, simple symbols, local
+import edges, callable surfaces, scan limits, and unknowns. It never executes
+repository code and must not be presented as runtime or intent proof.
+
+The command refuses to overwrite an existing output by default. Use `--out
+<directory>` for a clearly named alternate packet root when `SPEC.md` or
+`.specport/` artifacts already exist; use `--force` only for an unaccepted
+generated draft. An accepted `SPEC.md` is protected even with `--force`.
 
 Do not pass `--force` by default. If `SPEC.md` or an evidence file already
 exists, preserve the human-owned artifact and either ask before replacing it
@@ -103,12 +107,13 @@ If the baseline reports an unstable working tree, a missing Git identity, or
 an empty-tree/not-a-Git basis, preserve that limitation in `Unknowns` and
 repeat the scan only after the owner decides which tree is authoritative.
 
-### 3. Build a traceable evidence ledger
+### 3. Review and enrich the generated evidence ledger
 
-Read [the ledger template](references/evidence-ledger.template.json), copy its
-shape to `.specport/repo-to-spec/evidence-ledger.json`, and replace every
-placeholder with real values. Keep the baseline JSON beside it. The ledger
-must contain:
+`spec bundle` creates `.specport/repo-to-spec/evidence-ledger.json` from the
+same baseline and bounded map. Read it before interpreting the draft. If the
+host agent observes additional facts, append them to that ledger using the
+shape in [the ledger template](references/evidence-ledger.template.json).
+Keep the baseline JSON beside it. The ledger must contain:
 
 - `OBS-*` claims with a source path plus line/heading/symbol locator, Git ref,
   or an exact command result;
@@ -117,8 +122,8 @@ must contain:
 - `INF-*` interpretations that cite their supporting `OBS-*` IDs and remain
   `needsHumanConfirmation: true` until accepted;
 - `UNK-*` questions with materiality and the workflow stage they block;
-- command records with the command, purpose, run time, exit code, and the
-  path of any captured output;
+- command records with the command or internal stage, purpose, run time, exit
+  code, and the path of any captured output;
 - a handoff object naming `SPEC.md`, `.specport/contract.json`, and the next
   skill.
 
@@ -204,6 +209,8 @@ Return the exact paths and status of:
 - `.specport/repo-map.json`;
 - `.specport/repo-to-spec/evidence-ledger.json`;
 - `.specport/repo-to-spec/spec-check.json`;
+- `.specport/repo-to-spec/packet.json` with output hashes and the draft-only
+  handoff status;
 - `.specport/contract.json` and its validation result only when the owner has
   accepted the contract;
 - an `Unknowns` section and a short `Next actions` section in `SPEC.md`.

@@ -48,6 +48,11 @@ import {
 } from './spec/lifecycle.js';
 import { mapRepository, renderRepositoryMapMarkdown } from './spec/map.js';
 import {
+  createRepoToSpecPacket,
+  packetOutputPaths,
+  renderPacketHuman,
+} from './spec/packet.js';
+import {
   GitHubSpecPullError,
   type GitHubSpecPullResult,
   pullGitHubSpec,
@@ -74,6 +79,7 @@ interface Options {
     | 'spec-create'
     | 'spec-discover'
     | 'spec-map'
+    | 'spec-bundle'
     | 'spec-cover'
     | 'spec-remix'
     | 'spec-build'
@@ -158,6 +164,18 @@ export async function runCli(
       const map = await mapRepository(options.path, options.generatedAt);
       await writeMapArtifact(options, map, stdout);
       return 0;
+    }
+    if (options.command === 'spec-bundle') {
+      const outputRoot = options.writePath
+        ? resolve(options.path, options.writePath)
+        : undefined;
+      const packet = await createRepoToSpecPacket(
+        options.path,
+        outputRoot,
+        options.generatedAt,
+      );
+      await writeRepoToSpecPacket(options, packet, stdout);
+      return packet.packet.specCheck.readiness === 'ready' ? 0 : 5;
     }
     if (options.command === 'spec-cover') {
       if (!options.targetPath)
@@ -430,6 +448,7 @@ function parseArgs(argv: readonly string[]): Options {
     rawCommand === 'create' ||
     rawCommand === 'check' ||
     rawCommand === 'map' ||
+    rawCommand === 'bundle' ||
     rawCommand === 'cover' ||
     rawCommand === 'remix' ||
     rawCommand === 'build'
@@ -510,9 +529,19 @@ function parseSpecArgs(args: string[]): Options {
   const requestedSubcommand = args.shift();
   const subcommand = requestedSubcommand;
   if (subcommand === 'pull') return parsePullArgs(args);
-  if (subcommand === 'discover' || subcommand === 'map') {
+  if (
+    subcommand === 'discover' ||
+    subcommand === 'map' ||
+    subcommand === 'bundle'
+  ) {
     const options: Options = {
-      ...baseOptions(subcommand === 'map' ? 'spec-map' : 'spec-discover'),
+      ...baseOptions(
+        subcommand === 'map'
+          ? 'spec-map'
+          : subcommand === 'bundle'
+            ? 'spec-bundle'
+            : 'spec-discover',
+      ),
       path: '.',
       json: false,
       force: false,
@@ -663,7 +692,7 @@ function parseSpecArgs(args: string[]): Options {
     return options;
   }
   throw new UsageError(
-    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec bundle [path]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
   );
 }
 
@@ -1340,6 +1369,56 @@ async function writeMapArtifact(
       '',
     ].join('\n'),
   );
+}
+
+async function writeRepoToSpecPacket(
+  options: Options,
+  artifacts: Awaited<ReturnType<typeof createRepoToSpecPacket>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const outputPaths = packetOutputPaths(artifacts.packet.outputs.root);
+  const outputs = [
+    [outputPaths.specPath, artifacts.specMarkdown],
+    [outputPaths.baselinePath, artifacts.baselineJson],
+    [outputPaths.mapPath, artifacts.mapJson],
+    [outputPaths.ledgerPath, artifacts.ledgerJson],
+    [outputPaths.checkPath, artifacts.specCheckJson],
+    [outputPaths.packetPath, artifacts.packetJson],
+  ] as const;
+
+  if (!options.force) {
+    for (const [target] of outputs) {
+      try {
+        await access(target);
+        throw new OutputError(`Refusing to overwrite ${target}; pass --force.`);
+      } catch (error) {
+        if (error instanceof OutputError) throw error;
+      }
+    }
+  } else {
+    try {
+      const existingSpec = await readFile(outputPaths.specPath, 'utf8');
+      if (
+        /status\s*:\s*\**\s*(accepted|ready|shippable)\b/i.test(existingSpec)
+      ) {
+        throw new OutputError(
+          `Refusing to overwrite an accepted SPEC.md at ${outputPaths.specPath}. Preserve the human-owned contract and choose another --out directory.`,
+        );
+      }
+    } catch (error) {
+      if (error instanceof OutputError) throw error;
+    }
+  }
+
+  for (const [target, content] of outputs) {
+    await writeSpecOutput(target, content, options.force);
+  }
+
+  if (options.json) {
+    stdout.write(artifacts.packetJson);
+    return;
+  }
+  stdout.write(renderPacketHuman(artifacts.packet, outputPaths));
 }
 
 async function writeLifecycleArtifact(
@@ -2076,6 +2155,7 @@ Usage:
   specport spec check <SPEC.md> [--json] [--write REPORT]
   specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec map [path] [--out MAP.md] [--json] [--force] [--generated-at ISO-8601]
+  specport spec bundle [path] [--out DIRECTORY] [--json] [--force] [--generated-at ISO-8601]
   specport spec cover <SPEC.md> --target <repo> --target-stack <stack> [--contract FILE] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec remix <SPEC.md> --change <statement> [--change <statement> ...] [--reason TEXT] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec build <SPEC.md> --target <repo> --target-stack <stack> --contract FILE --acceptance-record FILE [--provenance RECEIPT] [--out FILE] [--json] [--force]
@@ -2085,6 +2165,7 @@ Usage:
   specport create <input> ...  (alias)
   specport check <SPEC.md> ... (alias)
   specport map [path] ...       (top-level alias for spec map)
+  specport bundle [path] ...    (top-level alias for spec bundle)
   specport cover <SPEC.md> ...  (top-level alias for spec cover)
   specport remix <SPEC.md> ...  (top-level alias for spec remix)
   specport build <SPEC.md> ...  (top-level alias for spec build)
@@ -2095,6 +2176,7 @@ Spec workflows:
   spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec map        generate a bounded static repository map with explicit unknowns
+  spec bundle     write a complete repo-to-spec packet for an AI/human handoff
   spec cover      prepare a provenance- and contract-gated target implementation plan
   spec remix      create a lineage-preserving draft with an explicit change set
   spec build      create a human-gated implementation handoff; it does not generate code

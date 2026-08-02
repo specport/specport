@@ -75,9 +75,23 @@ try {
       'utf8',
     ),
   );
+  const packetSchema = JSON.parse(
+    await readFile(
+      join(installedRoot, 'schemas', 'repo-to-spec-packet.schema.json'),
+      'utf8',
+    ),
+  );
+  const ledgerSchema = JSON.parse(
+    await readFile(
+      join(installedRoot, 'schemas', 'repo-to-spec-evidence-ledger.schema.json'),
+      'utf8',
+    ),
+  );
   const lifecycleAjv = new Ajv({ allErrors: true, strict: false });
   addFormats(lifecycleAjv);
   const validateLifecycle = lifecycleAjv.compile(lifecycleSchema);
+  const validatePacket = lifecycleAjv.compile(packetSchema);
+  const validateLedger = lifecycleAjv.compile(ledgerSchema);
   const version = (
     await run(node, [installedCli, '--version'], consumer)
   ).stdout.trim();
@@ -120,6 +134,67 @@ try {
       'Installed repository mapper did not preserve its safety boundary.',
     );
   }
+  const packetRoot = join(consumer, 'repo-to-spec-packet');
+  const bundle = await runAllowFailure(
+    node,
+    [
+      installedCli,
+      'spec',
+      'bundle',
+      consumer,
+      '--out',
+      packetRoot,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:00:00.000Z',
+    ],
+    consumer,
+  );
+  if (bundle.code !== 5) {
+    throw new Error(
+      `Installed repo-to-spec bundle returned ${bundle.code}, expected draft gate 5.`,
+    );
+  }
+  const packet = JSON.parse(bundle.stdout);
+  if (
+    packet.artifactKind !== 'repo-to-spec-packet' ||
+    packet.status !== 'draft-only' ||
+    packet.safety?.codeExecuted !== false ||
+    packet.safety?.networkAccessed !== false
+  ) {
+    throw new Error(
+      'Installed repo-to-spec bundle did not preserve its draft-only safety boundary.',
+    );
+  }
+  assertPacket(validatePacket, packet, 'installed repo-to-spec packet');
+  for (const file of [
+    'SPEC.md',
+    '.specport/repository-baseline.json',
+    '.specport/repo-map.json',
+    '.specport/repo-to-spec/evidence-ledger.json',
+    '.specport/repo-to-spec/spec-check.json',
+    '.specport/repo-to-spec/packet.json',
+  ]) {
+    await access(join(packetRoot, ...file.split('/')));
+  }
+  const packetLedger = JSON.parse(
+    await readFile(
+      join(packetRoot, '.specport', 'repo-to-spec', 'evidence-ledger.json'),
+      'utf8',
+    ),
+  );
+  if (
+    packetLedger.artifactKind !== 'repo-to-spec-evidence-ledger' ||
+    packetLedger.handoff?.status !== 'draft-only'
+  ) {
+    throw new Error('Installed bundle did not write a usable evidence ledger.');
+  }
+  assertSchema(
+    validateLedger,
+    packetLedger,
+    'installed repo-to-spec ledger',
+    'repo-to-spec-evidence-ledger.schema.json',
+  );
   const remix = JSON.parse(
     (
       await run(
@@ -430,6 +505,12 @@ try {
   await access(contractPath);
   await access(join(installedRoot, 'schemas', 'repository-map.schema.json'));
   await access(join(installedRoot, 'schemas', 'spec-lifecycle.schema.json'));
+  await access(
+    join(installedRoot, 'schemas', 'repo-to-spec-packet.schema.json'),
+  );
+  await access(
+    join(installedRoot, 'schemas', 'repo-to-spec-evidence-ledger.schema.json'),
+  );
   const validation = JSON.parse(
     (
       await run(
@@ -512,6 +593,18 @@ function assertLifecycleArtifact(validate, artifact, label) {
   if (!validate(artifact)) {
     throw new Error(
       `${label} failed spec-lifecycle.schema.json: ${JSON.stringify(validate.errors)}`,
+    );
+  }
+}
+
+function assertPacket(validate, artifact, label) {
+  assertSchema(validate, artifact, label, 'repo-to-spec-packet.schema.json');
+}
+
+function assertSchema(validate, artifact, label, schemaName) {
+  if (!validate(artifact)) {
+    throw new Error(
+      `${label} failed ${schemaName}: ${JSON.stringify(validate.errors)}`,
     );
   }
 }

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/repo-to-spec-packet.schema.json",
+  "title": "SpecPort repository-to-spec packet",
+  "description": "A durable, draft-only packet of bounded repository evidence and human handoff paths.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "status",
+    "generatedAt",
+    "repository",
+    "safety",
+    "outputs",
+    "summary",
+    "specCheck",
+    "handoff"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "artifactKind": { "const": "repo-to-spec-packet" },
+    "status": { "const": "draft-only" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repository": {
+      "type": "object",
+      "required": ["root", "identity", "headCommit", "baseCommit", "baseKind", "stable", "authoritativeTree"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "identity": { "type": ["string", "null"] },
+        "headCommit": { "type": ["string", "null"] },
+        "baseCommit": { "type": ["string", "null"] },
+        "baseKind": { "type": "string", "enum": ["commit", "empty-tree", "not-a-git-repository"] },
+        "stable": { "type": ["boolean", "null"] },
+        "authoritativeTree": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["codeExecuted", "networkAccessed"],
+      "properties": {
+        "codeExecuted": { "const": false },
+        "networkAccessed": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "object",
+      "required": ["root", "packetPath", "files"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "packetPath": { "const": ".specport/repo-to-spec/packet.json" },
+        "files": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["path", "kind", "bytes", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "kind": { "type": "string", "enum": ["markdown", "json"] },
+              "bytes": { "type": "integer", "minimum": 0 },
+              "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": ["observedFiles", "mappedFiles", "mappedSymbols", "mappedImports", "mappedSurfaces", "unknowns"],
+      "properties": {
+        "observedFiles": { "type": "integer", "minimum": 0 },
+        "mappedFiles": { "type": "integer", "minimum": 0 },
+        "mappedSymbols": { "type": "integer", "minimum": 0 },
+        "mappedImports": { "type": "integer", "minimum": 0 },
+        "mappedSurfaces": { "type": "integer", "minimum": 0 },
+        "unknowns": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "specCheck": {
+      "type": "object",
+      "required": ["readiness", "accepted", "issueCount"],
+      "properties": {
+        "readiness": { "type": "string", "enum": ["ready", "draft", "invalid"] },
+        "accepted": { "type": "boolean" },
+        "issueCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "handoff": {
+      "type": "object",
+      "required": ["status", "ownerDecision", "nextSkill"],
+      "properties": {
+        "status": { "const": "draft-only" },
+        "ownerDecision": { "const": "pending" },
+        "nextSkill": { "const": "specport-spec-to-production" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

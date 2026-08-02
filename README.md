@@ -139,6 +139,22 @@ declares an accepted/ready status and has no unresolved human decisions. A
 draft or incomplete spec returns `5`; it is a hold signal, not a claim that the
 product is bad.
 
+For the AI-native repository workflow, generate the whole handoff packet in
+one bounded, read-only pass:
+
+```bash
+specport spec bundle .
+```
+
+This writes `SPEC.md`, `.specport/repository-baseline.json`,
+`.specport/repo-map.json`, `.specport/repo-to-spec/evidence-ledger.json`,
+`.specport/repo-to-spec/spec-check.json`, and a packet manifest with content
+hashes. It returns exit code `5` while the draft still needs human decisions;
+that is intentional. The packet executes no repository code, accesses no
+network, preserves observed/inferred/unknown labels, and refuses to overwrite
+an existing output unless `--force` is supplied. An accepted `SPEC.md` is
+protected even with `--force`.
+
 Map the repository into a bounded implementation map without executing its
 code:
 
@@ -312,8 +328,8 @@ in [`RELEASE.md`](RELEASE.md).
 SpecPort is an npm-ready receiver-first release candidate with deterministic
 repository discovery, source-preserving draft authoring, spec readiness checks,
 contract-shape validation, a provenance-preserving GitHub spec pull, bounded
-static repository mapping, lineage-aware cover/remix/build handoffs, and
-packaged agent playbook export. Public npm publication, a live receiver
+static repository mapping, one-command repo-to-spec packets, lineage-aware
+cover/remix/build handoffs, and packaged agent playbook export. Public npm publication, a live receiver
 deployment, cross-platform validation, code-generating adapters, and repeated
 maintainer adoption are external or future gates; the project does not claim
 those are proven by local tests.

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/repo-to-spec-evidence-ledger.schema.json",
+  "title": "SpecPort repository-to-spec evidence ledger",
+  "description": "Observed, inferred, unknown, and command evidence for a draft repository-to-spec handoff.",
+  "type": "object",
+  "required": ["schemaVersion", "artifactKind", "generatedAt", "repository", "observed", "inferred", "unknown", "accepted", "commands", "handoff"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "artifactKind": { "const": "repo-to-spec-evidence-ledger" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repository": {
+      "type": "object",
+      "required": ["root", "identity", "headCommit", "authoritativeTree", "baselineArtifact", "mapArtifact"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "identity": { "type": ["string", "null"] },
+        "headCommit": { "type": ["string", "null"] },
+        "authoritativeTree": { "type": "string", "minLength": 1 },
+        "baselineArtifact": { "const": ".specport/repository-baseline.json" },
+        "mapArtifact": { "const": ".specport/repo-map.json" }
+      },
+      "additionalProperties": false
+    },
+    "observed": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
+    "inferred": { "type": "array", "items": { "$ref": "#/$defs/inference" } },
+    "unknown": { "type": "array", "items": { "$ref": "#/$defs/unknown" } },
+    "accepted": { "type": "array" },
+    "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+    "handoff": {
+      "type": "object",
+      "required": ["specPath", "contractPath", "nextSkill", "status", "ownerDecision", "limitations"],
+      "properties": {
+        "specPath": { "const": "SPEC.md" },
+        "contractPath": { "const": ".specport/contract.json" },
+        "nextSkill": { "const": "specport-spec-to-production" },
+        "status": { "const": "draft-only" },
+        "ownerDecision": { "const": "pending" },
+        "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["kind", "path", "locator", "ref"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["artifact", "file", "git", "command"] },
+        "path": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "observation": {
+      "type": "object",
+      "required": ["id", "claim", "sources"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^OBS-[0-9]{3,}$" },
+        "claim": { "type": "string", "minLength": 1 },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/source" } }
+      },
+      "additionalProperties": true
+    },
+    "inference": {
+      "type": "object",
+      "required": ["id", "claim", "basis", "confidence", "needsHumanConfirmation"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^INF-[0-9]{3,}$" },
+        "claim": { "type": "string", "minLength": 1 },
+        "basis": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^OBS-[0-9]{3,}$" } },
+        "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+        "needsHumanConfirmation": { "const": true }
+      },
+      "additionalProperties": true
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["id", "question", "materiality", "blocks", "owner"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^UNK-[0-9]{3,}$" },
+        "question": { "type": "string", "minLength": 1 },
+        "materiality": { "type": "string", "enum": ["blocks", "important", "informational"] },
+        "blocks": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "owner": { "const": "human" }
+      },
+      "additionalProperties": true
+    },
+    "command": {
+      "type": "object",
+      "required": ["id", "command", "purpose", "ranAt", "exitCode", "evidencePath"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^CMD-[0-9]{3,}$" },
+        "command": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "ranAt": { "type": "string", "format": "date-time" },
+        "exitCode": { "type": "integer", "minimum": 0 },
+        "evidencePath": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

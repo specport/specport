@@ -178,6 +178,7 @@ The target command surface is:
 | --- | --- |
 | specport coverage <repo> | Compare the final Git-visible tree with a receiver or expected scope |
 | specport spec discover <repo> | Generate an observed repository-baseline draft |
+| specport spec bundle <repo> | Generate the draft SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest in one read-only pass |
 | specport spec validate <contract> | Validate a human-owned product contract before implementation |
 | specport create <input> | Turn arbitrary text into a draft spec |
 | specport check <spec> | Check structure, completeness, provenance, and readiness |
@@ -251,7 +252,10 @@ The first job is:
 The first-minute experience for the current foundation is:
 
 ~~~
-npx --yes @specport/specport@latest spec discover . --write SPEC.md
+npx --yes @specport/specport@latest spec bundle .
+
+# Writes SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest.
+# Exit 5 is expected until the human contract is filled and accepted.
 specport spec validate .specport/contract.json
 
 specport create notes.md --out SPEC.md
@@ -271,7 +275,10 @@ specport spec build SPEC.md \
 For an existing project, the parallel entry point is:
 
 ~~~
-npx --yes @specport/specport@latest spec discover . --write SPEC.md
+npx --yes @specport/specport@latest spec bundle .
+
+# The packet is draft-only until a human confirms intent, criteria, taste, and release.
+# Use --out <directory> when preserving an existing SPEC.md or .specport packet.
 
 # Map edit zones, symbols, local imports, and callable surfaces without executing code:
 specport map . --json --write .specport/repo-map.json
@@ -281,14 +288,16 @@ specport skill list
 specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
-The create, check, discover, validate, pull, map, skill list, skill export, and
-bounded lifecycle artifact commands are implemented and tested in the current
-foundation. Map is a bounded static/token scan, not a full language AST or
-runtime behavior proof. Pull covers one exact GitHub file at a resolved commit
-and records a content digest, license, and provenance evidence. Cover produces
-a ready-or-blocked plan, remix produces a draft with preserved parent identity,
-and build produces a ready-or-blocked handoff; none of these commands generate
-code, run repository checks, perform taste review, or make a ship decision.
+The create, check, discover, bundle, validate, pull, map, skill list, skill
+export, and bounded lifecycle artifact commands are implemented and tested in
+the current foundation. Bundle writes a complete draft-only repo-to-spec
+packet with output hashes and refuses to replace an accepted SPEC.md. Map is a
+bounded static/token scan, not a full language AST or runtime behavior proof.
+Pull covers one exact GitHub file at a resolved commit and records a content
+digest, license, and provenance evidence. Cover produces a ready-or-blocked
+plan, remix produces a draft with preserved parent identity, and build produces
+a ready-or-blocked handoff; none of these commands generate code, run
+repository checks, perform taste review, or make a ship decision.
 Manifest-based discovery, full AST-specific mapping, code-generating target
 adapters, search, and public discovery remain roadmap work.
 
@@ -300,6 +309,8 @@ The current codebase is already an early spec foundation:
 
 - spec discover creates a grounded repository-baseline draft from observed
   files, package metadata, Git state, README headings, and detected checks;
+- spec bundle composes discovery, bounded mapping, structural checking, and
+  evidence-ledger generation into one draft-only repo-to-spec packet;
 - spec validate validates a human-owned product contract with intent,
   acceptance, verification, taste, release, and path-boundary fields;
 - spec create preserves arbitrary text as a provenance-bearing draft, and spec

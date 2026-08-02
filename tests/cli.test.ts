@@ -51,6 +51,7 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('specport skill list');
     expect(result.stdout).toContain('specport skill export');
     expect(result.stdout).toContain('specport spec discover');
+    expect(result.stdout).toContain('specport spec bundle');
     expect(result.stdout).toContain('specport spec validate');
     expect(result.stdout).toContain('specport pull');
     expect(result.stdout).toContain('--receipt <file>');
@@ -121,6 +122,103 @@ describe('SpecPort CLI contract', () => {
     expect(first.code).toBe(0);
     expect(second.code).toBe(0);
     expect(parseJson(second)).toEqual(parseJson(first));
+  });
+
+  it('writes a complete draft-only repo-to-spec packet without executing code', async () => {
+    const repository = await createRepository();
+    await writeFile(
+      join(repository, 'package.json'),
+      JSON.stringify({
+        name: 'bundle-fixture',
+        scripts: { test: 'node test.js' },
+      }),
+      'utf8',
+    );
+    const outputRoot = join(repository, 'generated');
+    const result = await invoke([
+      'spec',
+      'bundle',
+      repository,
+      '--out',
+      outputRoot,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:30:00.000Z',
+    ]);
+    const packet = parseJson(result);
+
+    expect(result.code).toBe(5);
+    expect(result.stderr).toBe('');
+    expect(packet.artifactKind).toBe('repo-to-spec-packet');
+    expect(packet.status).toBe('draft-only');
+    expect(record(packet.safety).codeExecuted).toBe(false);
+    expect(record(packet.safety).networkAccessed).toBe(false);
+    expect(record(packet.specCheck).readiness).toBe('draft');
+    expect(record(packet.handoff).ownerDecision).toBe('pending');
+    expect(await readFile(join(outputRoot, 'SPEC.md'), 'utf8')).toContain(
+      '## Static implementation map',
+    );
+    expect(
+      JSON.parse(
+        await readFile(
+          join(outputRoot, '.specport', 'repository-baseline.json'),
+          'utf8',
+        ),
+      ).specKind,
+    ).toBe('repository-baseline');
+    expect(
+      JSON.parse(
+        await readFile(join(outputRoot, '.specport', 'repo-map.json'), 'utf8'),
+      ).safety.codeExecuted,
+    ).toBe(false);
+    const ledger = JSON.parse(
+      await readFile(
+        join(outputRoot, '.specport', 'repo-to-spec', 'evidence-ledger.json'),
+        'utf8',
+      ),
+    ) as Record<string, unknown>;
+    expect(ledger.artifactKind).toBe('repo-to-spec-evidence-ledger');
+    expect(ledger.observed).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'OBS-001' })]),
+    );
+    expect(ledger.inferred).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'INF-001' })]),
+    );
+    expect(ledger.unknown).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'UNK-001' })]),
+    );
+    expect(
+      await readFile(
+        join(outputRoot, '.specport', 'repo-to-spec', 'spec-check.json'),
+        'utf8',
+      ),
+    ).toContain('not-accepted');
+  });
+
+  it('refuses to overwrite an accepted generated spec even with force', async () => {
+    const repository = await createRepository();
+    const outputRoot = join(repository, 'generated');
+    await mkdir(outputRoot, { recursive: true });
+    await writeFile(
+      join(outputRoot, 'SPEC.md'),
+      '# Human contract\n\nStatus: accepted\n',
+      'utf8',
+    );
+
+    const result = await invoke([
+      'spec',
+      'bundle',
+      repository,
+      '--out',
+      outputRoot,
+      '--force',
+    ]);
+
+    expect(result.code).toBe(4);
+    expect(result.stderr).toContain('accepted SPEC.md');
+    expect(await readFile(join(outputRoot, 'SPEC.md'), 'utf8')).toContain(
+      'Status: accepted',
+    );
   });
 
   it('validates a product contract before implementation', async () => {

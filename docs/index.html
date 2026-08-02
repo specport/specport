@@ -197,15 +197,16 @@
           <p>
             The receiver-first wedge is the current product. The contract layer
             now includes deterministic draft authoring, readiness checks, a
-            bounded repository map, a provenance-preserving GitHub pull, and
-            lineage-aware lifecycle handoffs, while staying honest about what
-            still needs a human.
+            bounded repository map, a one-command repo-to-spec packet, a
+            provenance-preserving GitHub pull, and lineage-aware lifecycle
+            handoffs, while staying honest about what still needs a human.
           </p>
         </div>
         <div class="state-table" role="table" aria-label="SpecPort capabilities">
           <div class="state-row state-header" role="row"><span role="columnheader">Surface</span><span role="columnheader">What it does</span><span role="columnheader">Status</span></div>
           <div class="state-row" role="row"><span role="cell"><code>coverage</code></span><span role="cell">Compares the final Git-visible tree with a real receiver or approved scope.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>spec discover</code></span><span role="cell">Generates a grounded repository baseline and exposes unresolved contract fields.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec bundle</code></span><span role="cell">Writes SPEC.md, baseline, bounded map, evidence ledger, spec-check, and content-hashed packet manifest in one read-only pass.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>spec validate</code></span><span role="cell">Checks the shape of a human-owned product contract before implementation.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>pull</code></span><span role="cell">Fetches one spec from a repository with a declared license at a resolved GitHub commit and records provenance without executing repository code.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>create / check</code></span><span role="cell">Preserves rough input as a draft, then checks provenance, criteria, verification, taste, release, and acceptance.</span><span role="cell" class="status-live">shipping</span></div>
@@ -223,7 +224,7 @@
           <div class="section-kicker">06 / Start here</div>
           <div class="install-copy">
             <h2>One command to see what is actually in the room.</h2>
-            <p>Local by default. Installable in seconds. Useful before the review is over.</p>
+            <p>Local by default. Installable in seconds. Useful before the review is over. Use <code>specport spec bundle .</code> for the complete draft packet.</p>
           </div>
           <div class="code-panel">
             <div class="code-panel-top"><span>TERMINAL</span><button class="copy-button" type="button" data-copy="npm install --save-dev @specport/specport">copy</button></div>

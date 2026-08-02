@@ -6,6 +6,9 @@ exact npm artifact and clean-consumer smoke test pass.
 
 ## 0.1.0 - pending publication
 
+- Added `spec bundle`, a draft-only one-command repository-to-spec packet with
+  a grounded `SPEC.md`, bounded map, evidence ledger, structural check, output
+  hashes, and explicit no-code/no-network safety boundaries.
 - Added deterministic final-tree coverage with receiver and expected-scope
   boundaries.
 - Added repository discovery, source-preserving draft authoring, and spec
