@@ -325,7 +325,8 @@ The current codebase is already an early spec foundation:
 - spec build produces a machine-readable implementation handoff whose execution
   flags prove that SpecPort itself generated no code and ran no target code;
 - the repository includes native skills for repository-to-spec and
-  spec-to-production workflows;
+  spec-to-production workflows, including durable gate, taste-review, and
+  ship-receipt templates;
 - skill list/export exposes those packaged playbooks to a host agent without
   silently overwriting an existing skill directory;
 - coverage compares the final Git-visible tree with an explicit review

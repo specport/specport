@@ -41,8 +41,10 @@ Create a new, non-overwriting evidence directory for each run, for example
 `.specport/evidence/<run-id>/`. Use the repository's documented evidence
 location when one exists. Keep disposable logs and tarballs there; commit them
 only when the contract or owner requires durable release evidence. Start
-`gate-ledger.md` from `references/gate-ledger.template.md` (or use an
-equivalent machine-readable record) and keep one row per gate:
+`gate-ledger.md` from `references/gate-ledger.template.md`, start the taste
+record from `references/taste-review.template.md`, and start the ship receipt
+from `references/ship-receipt.template.md` (or use equivalent machine-readable
+records). Keep one row per gate:
 
 ```text
 gate | status | owner | evidence | tree/artifact identity | recorded-at | next action
@@ -219,7 +221,8 @@ reviewer to perform the real user job and record concrete observations:
 - defects, severity, screenshots/listening notes/logs/trace links as relevant;
 - decision, reviewer identity, timestamp, and follow-up owner.
 
-For UI, inspect the live flow; for audio, listen; for writing, read in
+Start the taste record from `references/taste-review.template.md`. For UI,
+inspect the live flow; for audio, listen; for writing, read in
 context; for operational software, exercise failure and recovery. Do not
 substitute a screenshot, static analysis, model judgment, or "looks good" for
 the named human review. If `taste.required` is false, record an explicit

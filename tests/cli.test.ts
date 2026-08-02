@@ -390,6 +390,7 @@ describe('SpecPort CLI contract', () => {
     expect(parseJson(production).files).toEqual(
       expect.arrayContaining([
         'references/gate-ledger.template.md',
+        'references/taste-review.template.md',
         'references/ship-receipt.template.md',
       ]),
     );

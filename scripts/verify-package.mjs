@@ -484,6 +484,7 @@ try {
   if (
     productionExport.artifactKind !== 'skill-export' ||
     !productionExport.files.includes('references/gate-ledger.template.md') ||
+    !productionExport.files.includes('references/taste-review.template.md') ||
     !productionExport.files.includes('references/ship-receipt.template.md') ||
     !productionExport.files.includes(
       'references/contract-acceptance-record.template.json',
@@ -492,6 +493,7 @@ try {
     throw new Error('Installed production skill export is incomplete.');
   }
   await access(join(productionTarget, 'references', 'gate-ledger.template.md'));
+  await access(join(productionTarget, 'references', 'taste-review.template.md'));
   await access(
     join(
       productionTarget,
