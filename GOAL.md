@@ -242,15 +242,16 @@ The first job is:
 > Turn rough intent or existing code into a trustworthy SPEC.md, identify
 > what is still unknown, and make the next implementation step obvious.
 
-The first-minute experience should eventually be:
+The first-minute experience for the current foundation is:
 
 ~~~
 npx --yes @specport/specport@latest spec discover . --write SPEC.md
 specport spec validate .specport/contract.json
 
-# Target lifecycle once the authoring/build phases land:
 specport create notes.md --out SPEC.md
 specport check SPEC.md
+
+# Target implementation handoff once the build phase lands:
 specport build SPEC.md --target .
 ~~~
 
@@ -259,11 +260,13 @@ For an existing project, the parallel entry point is:
 ~~~
 npx --yes @specport/specport@latest spec discover . --write SPEC.md
 
-# Target AST/evidence mapping once the mapper phase lands:
+# Current grounded mapping alias; AST/evidence mapping remains a later phase:
 specport map . --out SPEC.md
 ~~~
 
-These are target workflows until each command is implemented and tested.
+The create, check, discover, validate, and map-alias commands are implemented
+and tested in the current foundation. Pull, AST-specific mapping, cover, remix,
+build, skill export, search, and public discovery remain roadmap work.
 
 ## Phased roadmap
 
@@ -275,15 +278,19 @@ The current codebase is already an early spec foundation:
   files, package metadata, Git state, README headings, and detected checks;
 - spec validate validates a human-owned product contract with intent,
   acceptance, verification, taste, release, and path-boundary fields;
+- spec create preserves arbitrary text as a provenance-bearing draft, and spec
+  check reports whether a SPEC.md is structurally ready, human-accepted, and
+  free of unresolved decisions;
+- spec map is currently an explicit alias for grounded repository discovery;
 - the repository includes native skills for repository-to-spec and
   spec-to-production workflows;
 - coverage compares the final Git-visible tree with an explicit review
   receiver or expected scope and reports complete, partial, or unknown.
 
 These are valuable foundations and evidence adapters, but they are not yet the
-full product described here. The current code does not yet provide arbitrary
-text-to-spec authoring, GitHub spec pull/build, full AST mapping, lineage-aware
-cover/remix, a general build engine, public discovery, or ratings.
+full product described here. The current code does not yet provide GitHub spec
+pull/build, full AST mapping, lineage-aware cover/remix, a general build
+engine, skill export, public discovery, or ratings.
 
 Keep current commands and artifacts honest. Do not describe unbuilt lifecycle
 commands as if they already ship, and do not let the coverage adapter become
@@ -292,10 +299,11 @@ the definition of SpecPort.
 ### Phase 1: unify the foundational spec format
 
 Extend the existing contract and repository-baseline artifacts into a stable
-human-readable SPEC.md plus machine-readable metadata. Define provenance,
-readiness, unknown/decision handling, and the create and check workflows. Add
-representative messy-text fixtures and require a human review step for
-model-generated drafts.
+human-readable SPEC.md plus machine-readable metadata. Harden provenance,
+readiness, unknown/decision handling, and the deterministic create/check
+workflows with representative messy-text fixtures. If a model is used by a
+host skill, require a human review step for its draft; the core CLI itself
+must remain model-neutral.
 
 ### Phase 2: GitHub discovery and build
 

@@ -17,6 +17,12 @@ import type {
 import { tryRunGit } from './git/command.js';
 import { captureFinalTree, repositoryIdentity } from './git/snapshot.js';
 import { formatCoverageTodo, GitHumanAdapter } from './receiver/githuman.js';
+import {
+  checkSpecFile,
+  createSpecDraft,
+  renderSpecCheckHuman,
+  renderSpecDraftMarkdown,
+} from './spec/authoring.js';
 import { readAndValidateProductContract } from './spec/contract.js';
 import {
   discoverRepositorySpec,
@@ -32,7 +38,14 @@ export interface CliIo {
 }
 
 interface Options {
-  command: 'coverage' | 'help' | 'spec-discover' | 'spec-validate' | 'version';
+  command:
+    | 'coverage'
+    | 'help'
+    | 'spec-check'
+    | 'spec-create'
+    | 'spec-discover'
+    | 'spec-validate'
+    | 'version';
   path: string;
   json: boolean;
   writePath?: string;
@@ -85,6 +98,16 @@ export async function runCli(
       const spec = await discoverRepositorySpec(options.path);
       await writeSpecArtifact(options, spec, stdout);
       return 0;
+    }
+    if (options.command === 'spec-create') {
+      const draft = await createSpecDraft(options.path, stdin);
+      await writeSpecDraftArtifact(options, draft, stdout);
+      return 0;
+    }
+    if (options.command === 'spec-check') {
+      const result = await checkSpecFile(options.path);
+      await writeSpecCheckArtifact(options, result, stdout);
+      return result.readiness === 'ready' ? 0 : 5;
     }
     if (options.command === 'spec-validate') {
       const contractPath = resolve(
@@ -274,6 +297,13 @@ function parseArgs(argv: readonly string[]): Options {
   if (rawCommand === 'spec') {
     return parseSpecArgs(args);
   }
+  if (
+    rawCommand === 'create' ||
+    rawCommand === 'check' ||
+    rawCommand === 'map'
+  ) {
+    return parseSpecArgs([rawCommand, ...args]);
+  }
   const isLegacyReview = rawCommand === 'review';
   if (rawCommand !== 'coverage' && !isLegacyReview) {
     throw new UsageError(`Unknown command: ${rawCommand}`);
@@ -344,7 +374,9 @@ function parseArgs(argv: readonly string[]): Options {
 }
 
 function parseSpecArgs(args: string[]): Options {
-  const subcommand = args.shift();
+  const requestedSubcommand = args.shift();
+  const subcommand =
+    requestedSubcommand === 'map' ? 'discover' : requestedSubcommand;
   if (subcommand === 'discover') {
     const options: Options = {
       ...baseOptions('spec-discover'),
@@ -365,6 +397,7 @@ function parseSpecArgs(args: string[]): Options {
           options.force = true;
           break;
         case '--write':
+        case '--out':
           options.writePath = requiredValue(args, ++index, arg);
           break;
         case '--help':
@@ -404,8 +437,84 @@ function parseSpecArgs(args: string[]): Options {
     options.contractPath = positional[0] ?? '.specport/contract.json';
     return options;
   }
+  if (subcommand === 'create') {
+    const options: Options = {
+      ...baseOptions('spec-create'),
+      path: '',
+      json: false,
+      force: false,
+      interactive: false,
+    };
+    const positional: string[] = [];
+    for (let index = 0; index < args.length; index += 1) {
+      const arg = args[index];
+      if (!arg) continue;
+      switch (arg) {
+        case '--json':
+          options.json = true;
+          break;
+        case '--force':
+          options.force = true;
+          break;
+        case '--write':
+        case '--out':
+          options.writePath = requiredValue(args, ++index, arg);
+          break;
+        case '--help':
+        case '-h':
+          throw new UsageError(helpText());
+        default:
+          if (arg.startsWith('-'))
+            throw new UsageError(`Unknown option: ${arg}`);
+          positional.push(arg);
+      }
+    }
+    if (positional.length !== 1)
+      throw new UsageError(
+        'spec create requires one input path, `-`, or inline text.',
+      );
+    options.path = positional[0] ?? '';
+    return options;
+  }
+  if (subcommand === 'check') {
+    const options: Options = {
+      ...baseOptions('spec-check'),
+      path: '',
+      json: false,
+      force: false,
+      interactive: false,
+    };
+    const positional: string[] = [];
+    for (let index = 0; index < args.length; index += 1) {
+      const arg = args[index];
+      if (!arg) continue;
+      switch (arg) {
+        case '--json':
+          options.json = true;
+          break;
+        case '--force':
+          options.force = true;
+          break;
+        case '--write':
+        case '--out':
+          options.writePath = requiredValue(args, ++index, arg);
+          break;
+        case '--help':
+        case '-h':
+          throw new UsageError(helpText());
+        default:
+          if (arg.startsWith('-'))
+            throw new UsageError(`Unknown option: ${arg}`);
+          positional.push(arg);
+      }
+    }
+    if (positional.length !== 1)
+      throw new UsageError('spec check requires one SPEC.md path.');
+    options.path = positional[0] ?? '';
+    return options;
+  }
   throw new UsageError(
-    'Use `spec discover [path]` or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, or `spec validate <contract.json>`.',
   );
 }
 
@@ -831,6 +940,71 @@ async function writeSpecArtifact(
   stdout.write(options.json ? json : markdown);
 }
 
+async function writeSpecDraftArtifact(
+  options: Options,
+  draft: Awaited<ReturnType<typeof createSpecDraft>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(draft, null, 2)}\n`;
+  const markdown = renderSpecDraftMarkdown(draft);
+  let wroteTarget: string | undefined;
+  if (options.writePath) {
+    const target = isAbsolute(options.writePath)
+      ? options.writePath
+      : resolve(options.writePath);
+    await writeSpecOutput(
+      target,
+      options.json ? json : markdown,
+      options.force,
+    );
+    wroteTarget = target;
+  }
+  stdout.write(options.json ? json : markdown);
+  if (!options.json && wroteTarget) stdout.write(`WROTE      ${wroteTarget}\n`);
+}
+
+async function writeSpecCheckArtifact(
+  options: Options,
+  result: Awaited<ReturnType<typeof checkSpecFile>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(result, null, 2)}\n`;
+  const human = renderSpecCheckHuman(result);
+  let wroteTarget: string | undefined;
+  if (options.writePath) {
+    const target = isAbsolute(options.writePath)
+      ? options.writePath
+      : resolve(options.writePath);
+    await writeSpecOutput(target, options.json ? json : human, options.force);
+    wroteTarget = target;
+  }
+  stdout.write(options.json ? json : human);
+  if (!options.json && wroteTarget) stdout.write(`WROTE      ${wroteTarget}\n`);
+}
+
+async function writeSpecOutput(
+  target: string,
+  content: string,
+  force: boolean,
+): Promise<void> {
+  if (!force) {
+    try {
+      await access(target);
+      throw new OutputError(`Refusing to overwrite ${target}; pass --force.`);
+    } catch (error) {
+      if (error instanceof OutputError) throw error;
+    }
+  }
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, content, 'utf8');
+  } catch (error) {
+    throw new OutputError(
+      `Could not write ${target}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
 function writeContractValidation(
   options: Options,
   contractPath: string,
@@ -1216,11 +1390,18 @@ function helpText(): string {
 Usage:
   specport coverage [path] [options]
   specport review --quick [path] [options]  (legacy alias)
-  specport spec discover [path] [--write SPEC.md] [--json] [--force]
+  specport spec create <input> [--out SPEC.md] [--json] [--force]
+  specport spec check <SPEC.md> [--json] [--write REPORT]
+  specport spec discover [path] [--out SPEC.md] [--json] [--force]
   specport spec validate [contract.json] [--json]
+  specport create <input> ...  (alias)
+  specport check <SPEC.md> ... (alias)
+  specport map [path] ...       (alias of spec discover)
   specport --version
 
 Spec workflows:
+  spec create      turn text into a deterministic draft while preserving source
+  spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec validate    validate a human-owned product contract before implementation
 

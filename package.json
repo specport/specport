@@ -54,12 +54,14 @@
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },
-  "main": "index.js",
+  "main": "dist/cli.js",
+  "types": "dist/cli.d.ts",
   "directories": {
     "doc": "docs",
     "example": "examples",
     "test": "tests"
   },
+  "author": "",
   "dependencies": {
     "assertion-error": "^2.0.1",
     "cac": "^6.7.14",
@@ -98,6 +100,5 @@
     "vite": "^7.3.6",
     "vite-node": "^3.2.4",
     "why-is-node-running": "^2.3.0"
-  },
-  "author": ""
+  }
 }

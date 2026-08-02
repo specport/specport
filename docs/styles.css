@@ -164,9 +164,10 @@ h2 { margin-bottom: 22px; font: 400 clamp(39px, 5vw, 66px)/.98 var(--display); l
 .state-row { display: grid; grid-template-columns: 1fr 2.25fr .85fr; gap: 20px; align-items: center; min-height: 72px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .state-header { min-height: 40px; color: #7c7b73; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .state-row code { font: 12px var(--mono); }
-.status-live, .status-human { justify-self: end; font: 10px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
-.status-live::before, .status-human::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 0; border-radius: 50%; background: var(--signal-deep); }
+.status-live, .status-human, .status-roadmap { justify-self: end; font: 10px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+.status-live::before, .status-human::before, .status-roadmap::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 0; border-radius: 50%; background: var(--signal-deep); }
 .status-human::before { background: var(--orange); }
+.status-roadmap::before { background: var(--ink-soft); }
 
 .install-section { color: var(--white); background: var(--orange); }
 .install-grid { display: grid; grid-template-columns: 1fr 2fr; column-gap: 60px; }

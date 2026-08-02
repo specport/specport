@@ -45,6 +45,9 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('--receiver githuman');
     expect(result.stdout).toContain('--expected-scope <file>');
     expect(result.stdout).toContain('--json');
+    expect(result.stdout).toContain('specport create');
+    expect(result.stdout).toContain('specport check');
+    expect(result.stdout).toContain('specport map');
     expect(result.stdout).toContain('specport spec discover');
     expect(result.stdout).toContain('specport spec validate');
   });
@@ -118,6 +121,58 @@ describe('SpecPort CLI contract', () => {
     const invalid = await invoke(['spec', 'validate', contractPath, '--json']);
     expect(invalid.code).toBe(5);
     expect(parseJson(invalid).valid).toBe(false);
+  });
+
+  it('creates a draft and checks an accepted spec through the short aliases', async () => {
+    const draft = await invoke([
+      'create',
+      '# Notes\n\nA small, reversible workflow.',
+      '--json',
+    ]);
+    const draftBrief = parseJson(draft);
+
+    expect(draft.code).toBe(0);
+    expect(draftBrief.specKind).toBe('authoring-draft');
+    expect(record(draftBrief.source).sha256).toMatch(/^[a-f0-9]{64}$/);
+
+    const directory = await mkdtemp(join(tmpdir(), 'specport-check-'));
+    temporaryPaths.push(directory);
+    const acceptedPath = join(directory, 'SPEC.md');
+    await writeFile(
+      acceptedPath,
+      [
+        '# Product spec',
+        '',
+        'Status: accepted',
+        'Source: maintainer notes',
+        '',
+        '## Intent',
+        'The owner is the maintainer.',
+        '',
+        '## Workflow',
+        'The user previews and confirms the change.',
+        '',
+        '## Acceptance',
+        'AC-001: Given a valid input, when confirmed, then the result is saved.',
+        '',
+        '## Verification',
+        'Check: `npm test`',
+        '',
+        '## Taste and human review',
+        'Reviewer: maintainer',
+        'Rubric: clear and reversible.',
+        '',
+        '## Release',
+        'Release target and artifact: npm package.',
+        'Compatibility: Node 20+. Rollback: previous version.',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const checked = await invoke(['check', acceptedPath, '--json']);
+    expect(checked.code).toBe(0);
+    expect(parseJson(checked).readiness).toBe('ready');
   });
 
   it('returns an inventory-only JSON diagnostic with no receiver and exit 0', async () => {

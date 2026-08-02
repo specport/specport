@@ -107,6 +107,29 @@ workflows, documentation headings, Git identity, and changed paths. It marks
 intent, acceptance, taste, and release decisions as unresolved rather than
 inventing them.
 
+Turn notes or an existing brief into a deterministic draft without losing the
+source text:
+
+```bash
+specport create notes.md --out SPEC.md
+specport create - --out SPEC.md < notes.txt
+```
+
+`specport create` does not call a model. It records the source kind, absolute
+file path when applicable, SHA-256, observed headings, and the human decisions
+that still need an owner. Use `specport check SPEC.md` before implementation:
+
+```bash
+specport check SPEC.md
+specport check SPEC.md --json
+```
+
+The check returns exit code `0` only for a structurally complete spec that
+declares an accepted/ready status and has no unresolved human decisions. A
+draft or incomplete spec returns `5`; it is a hold signal, not a claim that the
+product is bad. `specport map .` is currently an alias for the grounded
+repository discovery path; AST-specific mapping remains a roadmap item.
+
 Validate a human-owned machine-readable contract before implementation:
 
 ```bash
@@ -146,7 +169,7 @@ never executes a declared check; a selected check is recorded as `not-run`.
 | 0 | Diagnostic completed or exact coverage is complete |
 | 2 | Usage, Git, or input error |
 | 4 | Requested output could not be written |
-| 5 | Coverage or contract validation requires review |
+| 5 | Coverage, contract, or spec readiness requires review |
 | 7 | Requested receiver is unavailable or could not consume a finding |
 
 ## What SpecPort is not
@@ -185,9 +208,10 @@ the packed file list; passing TypeScript alone is not release evidence.
 
 ## Status
 
-SpecPort is an npm-installable receiver-first release with a deterministic
-repository baseline and contract-shape validator. A live receiver deployment,
-cross-platform validation, and repeated maintainer adoption are external gates;
-the project does not claim those are proven by local tests.
+SpecPort is an npm-installable receiver-first release with deterministic
+repository discovery, source-preserving draft authoring, spec readiness checks,
+and contract-shape validation. A live receiver deployment, cross-platform
+validation, and repeated maintainer adoption are external gates; the project
+does not claim those are proven by local tests.
 
 More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).
