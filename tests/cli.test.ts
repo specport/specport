@@ -262,7 +262,8 @@ describe('SpecPort CLI contract', () => {
       '--generated-at',
       '2026-08-02T19:36:00.000Z',
     ]);
-    expect(clean.code).toBe(0);
+    if (clean.code !== 0)
+      throw new Error(`Expected clean drift report:\n${clean.stdout}`);
     expect(parseJson(clean).status).toBe('clean');
 
     await runGit(repository, ['add', 'SPEC.lock']);
