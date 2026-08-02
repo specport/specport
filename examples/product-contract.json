@@ -1,0 +1,64 @@
+{
+  "contractVersion": "1",
+  "kind": "product-contract",
+  "id": "example-product",
+  "title": "Example product contract",
+  "intent": {
+    "owner": "The person who makes the ship decision",
+    "userJob": "A named user completes a concrete job",
+    "outcome": "The user reaches the intended outcome with stated quality",
+    "nonGoals": [
+      "Unrelated features",
+      "Replacing human judgment where the rubric requires it"
+    ]
+  },
+  "constraints": [
+    "Keep user data within the declared boundary",
+    "Preserve the existing public interface unless explicitly changed"
+  ],
+  "acceptance": [
+    {
+      "id": "AC-001",
+      "statement": "Given the supported input, the user can complete the named job and receives the intended outcome.",
+      "evidence": [
+        "A repeatable end-to-end test",
+        "A human walkthrough of the real user path"
+      ],
+      "risk": "The happy path may work while recovery or edge cases fail."
+    }
+  ],
+  "verification": [
+    {
+      "id": "V-001",
+      "command": "npm test",
+      "purpose": "Regression and behavior checks",
+      "environment": "Node.js 20 or newer"
+    }
+  ],
+  "taste": {
+    "required": true,
+    "reviewer": "A human who represents the target user",
+    "rubric": [
+      "The first-minute flow is understandable without agent narration",
+      "The result feels trustworthy and complete for the named job",
+      "Failure and recovery states are clear"
+    ]
+  },
+  "release": {
+    "target": "The actual artifact or deployment target",
+    "version": "0.1.0",
+    "readiness": [
+      "Build and quality checks pass",
+      "The exact release artifact works in a clean consumer",
+      "Documentation and rollback path are available"
+    ],
+    "rollback": [
+      "Identify the last known-good version or commit",
+      "Document how to return to it"
+    ]
+  },
+  "boundaries": {
+    "allowedPaths": ["src", "tests", "docs"],
+    "forbiddenPaths": [".env", "credentials", "production secrets"]
+  }
+}

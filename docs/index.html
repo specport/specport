@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="SpecPort binds AI-assisted changes to evidence, contracts, human taste, and a real ship decision."
+    />
+    <meta name="theme-color" content="#11110f" />
+    <meta property="og:title" content="SpecPort — from done to shippable" />
+    <meta
+      property="og:description"
+      content="Catch review gaps. Ship with a contract."
+    />
+    <meta property="og:type" content="website" />
+    <title>SpecPort — from done to shippable</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="site-header shell">
+      <a class="wordmark" href="#top" aria-label="SpecPort home">
+        <span class="wordmark-mark">SP</span>
+        <span>specport</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#skills">Skills</a>
+        <a href="#install">Install</a>
+        <a class="nav-github" href="https://github.com/stancsz/specport">
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse"></span> local · deterministic · contract-bound</div>
+          <h1>The last mile between <em>done</em> and shippable.</h1>
+          <p class="hero-lede">
+            SpecPort reads the final Git-visible tree, binds it to the review
+            source that actually matters, and carries accepted product contracts
+            through proof, taste, and release.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install">Install the CLI <span>↓</span></a>
+            <a class="button button-quiet" href="#contract">Read the contract <span>↘</span></a>
+          </div>
+          <div class="hero-note">
+            <span class="note-line"></span>
+            <span>No hook. No transcript. No hosted account.</span>
+          </div>
+        </div>
+        <div class="hero-terminal" aria-label="SpecPort terminal example">
+          <div class="terminal-topbar">
+            <span class="terminal-dots"><i></i><i></i><i></i></span>
+            <span class="terminal-label">review-preflight</span>
+            <span class="terminal-state">LOCAL</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-command"><span class="prompt">$</span> specport coverage --receiver githuman --review rv_418</div>
+            <div class="terminal-rule"></div>
+            <div class="terminal-row"><span>RECEIVER</span><b>githuman / rv_418</b></div>
+            <div class="terminal-row"><span>FINAL TREE</span><b>14 paths · stable</b></div>
+            <div class="terminal-row"><span>COVERAGE</span><b class="signal">partial</b></div>
+            <div class="terminal-row"><span>UNREVIEWED</span><b class="alert">docs/release.md</b></div>
+            <div class="terminal-rule"></div>
+            <div class="terminal-result"><span class="result-mark">!</span><span>one review-scoped finding<br /><strong>approval stays human</strong></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="signal-strip">
+        <div class="shell strip-grid">
+          <div><strong>01</strong><span>Observe the whole tree</span></div>
+          <div><strong>02</strong><span>Bind to a real receiver</span></div>
+          <div><strong>03</strong><span>Prove what can be proven</span></div>
+          <div><strong>04</strong><span>Let a human ship</span></div>
+        </div>
+      </section>
+
+      <section class="section shell intro-grid" id="contract">
+        <div class="section-kicker">01 / The premise</div>
+        <div>
+          <h2>A green test suite is not a ship decision.</h2>
+          <p class="section-lede">
+            AI-assisted changes often arrive after the session is gone, with a
+            summary that sounds complete and a working tree nobody has bounded.
+            SpecPort makes the final-state relation explicit without becoming
+            another reviewer, recorder, or control plane.
+          </p>
+          <div class="quote-block">
+            <span class="quote-mark">“</span>
+            <p>Show the observed patch, not the agent’s story.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section shell layers" id="how-it-works">
+        <div class="section-kicker">02 / Three truths</div>
+        <div class="layer-grid">
+          <article class="layer-card layer-evidence">
+            <div class="card-number">A / 01</div>
+            <h3>Evidence</h3>
+            <p>
+              What the repository, Git state, checks, receiver source, and
+              release artifact actually show.
+            </p>
+            <div class="card-detail"><span>machine-owned</span><span>exact</span></div>
+          </article>
+          <article class="layer-card layer-contract">
+            <div class="card-number">B / 02</div>
+            <h3>Contract</h3>
+            <p>
+              What a named owner says the product must do, must not do, and how
+              a reviewer can tell that it is true.
+            </p>
+            <div class="card-detail"><span>human-owned</span><span>bounded</span></div>
+          </article>
+          <article class="layer-card layer-taste">
+            <div class="card-number">C / 03</div>
+            <h3>Taste</h3>
+            <p>
+              What a human experiences in the real medium: interaction, visual
+              quality, audio, writing, or operational confidence.
+            </p>
+            <div class="card-detail"><span>human-reviewed</span><span>felt</span></div>
+          </article>
+        </div>
+        <div class="layer-footnote">
+          <span class="footnote-mark">↳</span>
+          <span>Automation reports facts. It does not impersonate approval.</span>
+        </div>
+      </section>
+
+      <section class="section section-dark" id="skills">
+        <div class="shell skills-layout">
+          <div class="section-kicker">03 / The agent layer</div>
+          <div class="skills-intro">
+            <h2>Specs are not vibe fuel.<br /><span>They are a binding surface.</span></h2>
+            <p>
+              Give an agent the smallest sufficient context, then require it to
+              leave the project more evidenced than it found it.
+            </p>
+          </div>
+          <div class="skill-stack">
+            <article class="skill-card">
+              <div class="skill-index">SKILL / 01</div>
+              <div class="skill-content">
+                <h3>Repository → spec</h3>
+                <p>Ground an existing codebase into a draft without mistaking implementation for intent.</p>
+                <a href="https://github.com/stancsz/specport/blob/main/skills/specport-repo-to-spec/SKILL.md">Read the playbook <span>↗</span></a>
+              </div>
+              <div class="skill-arrow">→</div>
+            </article>
+            <article class="skill-card">
+              <div class="skill-index">SKILL / 02</div>
+              <div class="skill-content">
+                <h3>Spec → production</h3>
+                <p>Execute accepted criteria through implementation, checks, taste, artifact smoke, and rollback.</p>
+                <a href="https://github.com/stancsz/specport/blob/main/skills/specport-spec-to-production/SKILL.md">Read the playbook <span>↗</span></a>
+              </div>
+              <div class="skill-arrow">→</div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section shell workflow">
+        <div class="section-kicker">04 / The loop</div>
+        <div class="workflow-head">
+          <h2>From repository evidence<br /><em>to a real ship.</em></h2>
+          <p>Every arrow has an owner. Every gate has a different kind of proof.</p>
+        </div>
+        <div class="workflow-line" role="list" aria-label="SpecPort product lifecycle">
+          <div class="workflow-step" role="listitem"><span>01</span><strong>Discover</strong><small>facts + unknowns</small></div>
+          <div class="workflow-connector" aria-hidden="true">→</div>
+          <div class="workflow-step" role="listitem"><span>02</span><strong>Accept</strong><small>intent + boundaries</small></div>
+          <div class="workflow-connector" aria-hidden="true">→</div>
+          <div class="workflow-step" role="listitem"><span>03</span><strong>Build</strong><small>vertical slices</small></div>
+          <div class="workflow-connector" aria-hidden="true">→</div>
+          <div class="workflow-step" role="listitem"><span>04</span><strong>Verify</strong><small>tree + checks</small></div>
+          <div class="workflow-connector" aria-hidden="true">→</div>
+          <div class="workflow-step workflow-final" role="listitem"><span>05</span><strong>Ship</strong><small>taste + authority</small></div>
+        </div>
+      </section>
+
+      <section class="section shell product-state">
+        <div class="section-kicker">05 / What is real today</div>
+        <div class="state-head">
+          <h2>A small tool with a serious boundary.</h2>
+          <p>
+            The receiver-first wedge is the current product. The contract layer
+            is deliberately honest about what it can validate and what still
+            needs a human.
+          </p>
+        </div>
+        <div class="state-table" role="table" aria-label="SpecPort capabilities">
+          <div class="state-row state-header" role="row"><span role="columnheader">Surface</span><span role="columnheader">What it does</span><span role="columnheader">Status</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>coverage</code></span><span role="cell">Compares the final Git-visible tree with a real receiver or approved scope.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec discover</code></span><span role="cell">Generates a grounded repository baseline and exposes unresolved contract fields.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec validate</code></span><span role="cell">Checks the shape of a human-owned product contract before implementation.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>taste</code></span><span role="cell">Names the human review that automation cannot provide.</span><span role="cell" class="status-human">human gate</span></div>
+        </div>
+      </section>
+
+      <section class="section install-section" id="install">
+        <div class="shell install-grid">
+          <div class="section-kicker">06 / Start here</div>
+          <div class="install-copy">
+            <h2>One command to see what is actually in the room.</h2>
+            <p>Local by default. Installable in seconds. Useful before the review is over.</p>
+          </div>
+          <div class="code-panel">
+            <div class="code-panel-top"><span>TERMINAL</span><button class="copy-button" type="button" data-copy="npm install --save-dev @specport/specport">copy</button></div>
+            <pre><code><span class="code-muted">$</span> npm install --save-dev @specport/specport
+
+<span class="code-muted">$</span> specport coverage
+<span class="code-signal">VERDICT</span>    inventory-only
+<span class="code-signal">COVERAGE</span>   unknown
+<span class="code-muted">NEXT</span>       provide a receiver or approved scope</code></pre>
+          </div>
+          <div class="install-links">
+            <a href="https://www.npmjs.com/package/@specport/specport">npm package <span>↗</span></a>
+            <a href="https://github.com/stancsz/specport">source on GitHub <span>↗</span></a>
+            <a href="https://github.com/stancsz/specport/blob/main/examples/product-contract.json">contract example <span>↗</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section shell honesty">
+        <div class="honesty-mark">!</div>
+        <div>
+          <div class="section-kicker">07 / The honest part</div>
+          <h2>Not an AI reviewer.<br />Not a magic compiler.</h2>
+          <p>
+            SpecPort does not infer behavior from hashes, replace tests, or turn
+            a generated paragraph into a ship decision. It makes the boundary
+            between evidence, contract, taste, and authority visible enough for
+            an existing review system to use.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer shell">
+      <div class="footer-brand"><span class="wordmark-mark">SP</span><span>specport</span></div>
+      <p>Catch review gaps. Ship with a contract.</p>
+      <div class="footer-links"><a href="https://github.com/stancsz/specport">GitHub</a><a href="https://www.npmjs.com/package/@specport/specport">npm</a><a href="#top">Back to top ↑</a></div>
+    </footer>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
