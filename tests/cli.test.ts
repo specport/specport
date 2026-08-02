@@ -52,6 +52,16 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('specport skill export');
     expect(result.stdout).toContain('specport spec discover');
     expect(result.stdout).toContain('specport spec validate');
+    expect(result.stdout).toContain('specport pull');
+    expect(result.stdout).toContain('--receipt <file>');
+    expect(result.stdout).toContain('--generated-at');
+  });
+
+  it('rejects an unsafe GitHub pull path before making a network request', async () => {
+    const result = await invoke(['pull', 'acme/ledger@main:../secret.md']);
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain('pull unsafe-path');
   });
 
   it('generates a draft repository baseline through the spec command', async () => {
@@ -81,6 +91,36 @@ describe('SpecPort CLI contract', () => {
     expect(brief.nextActions).toEqual(
       expect.arrayContaining([expect.stringContaining('contract')]),
     );
+  });
+
+  it('supports a fixed timestamp for reproducible CLI discovery output', async () => {
+    const repository = await createRepository();
+    await writeFile(
+      join(repository, 'package.json'),
+      JSON.stringify({ name: 'stable-fixture' }),
+      'utf8',
+    );
+    const timestamp = '2026-08-02T19:15:00.000Z';
+    const first = await invoke([
+      'spec',
+      'discover',
+      repository,
+      '--json',
+      '--generated-at',
+      timestamp,
+    ]);
+    const second = await invoke([
+      'spec',
+      'discover',
+      repository,
+      '--json',
+      '--generated-at',
+      timestamp,
+    ]);
+
+    expect(first.code).toBe(0);
+    expect(second.code).toBe(0);
+    expect(parseJson(second)).toEqual(parseJson(first));
   });
 
   it('validates a product contract before implementation', async () => {
@@ -238,6 +278,23 @@ describe('SpecPort CLI contract', () => {
     ]);
     expect(refused.code).toBe(4);
     expect(refused.stderr).toContain('Refusing to overwrite');
+
+    const productionTarget = join(directory, 'spec-to-production');
+    const production = await invoke([
+      'skill',
+      'export',
+      'specport-spec-to-production',
+      '--out',
+      productionTarget,
+      '--json',
+    ]);
+    expect(production.code).toBe(0);
+    expect(parseJson(production).files).toEqual(
+      expect.arrayContaining([
+        'references/gate-ledger.template.md',
+        'references/ship-receipt.template.md',
+      ]),
+    );
   });
 
   it('returns an inventory-only JSON diagnostic with no receiver and exit 0', async () => {

@@ -268,10 +268,11 @@ specport skill list
 specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
-The create, check, discover, validate, map-alias, skill list, and skill export
-commands are implemented and tested in the current foundation. Pull,
-AST-specific mapping, cover, remix, build, search, and public discovery remain
-roadmap work.
+The create, check, discover, validate, pull, map-alias, skill list, and skill
+export commands are implemented and tested in the current foundation. Pull
+currently covers one exact GitHub file at a resolved commit with license and
+provenance evidence; manifest-based discovery, AST-specific mapping, cover,
+remix, build, search, and public discovery remain roadmap work.
 
 ## Phased roadmap
 
@@ -295,9 +296,9 @@ The current codebase is already an early spec foundation:
   receiver or expected scope and reports complete, partial, or unknown.
 
 These are valuable foundations and evidence adapters, but they are not yet the
-full product described here. The current code does not yet provide GitHub spec
-pull/build, full AST mapping, lineage-aware cover/remix, a general build
-engine, public discovery, or ratings.
+full product described here. The current code does not yet provide
+manifest-based discovery, full AST mapping, lineage-aware cover/remix, a
+general build engine, public discovery, or ratings.
 
 Keep current commands and artifacts honest. Do not describe unbuilt lifecycle
 commands as if they already ship, and do not let the coverage adapter become
@@ -314,9 +315,9 @@ must remain model-neutral.
 
 ### Phase 2: GitHub discovery and build
 
-Implement the manifest and naming conventions, exact-ref pull, license and
-provenance checks, local inspection, and a bounded build handoff. Prove the
-workflow against fixture repositories before adding a public index.
+Extend the exact-ref pull foundation with manifest and naming conventions,
+discovery, local inspection, and a bounded build handoff. Prove the workflow
+against fixture repositories before adding a public index.
 
 ### Phase 3: repository-to-spec mapping
 

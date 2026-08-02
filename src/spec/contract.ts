@@ -65,18 +65,7 @@ export function validateProductContract(
   validateVerification(root.verification, issues);
   validateTaste(root.taste, issues);
   validateRelease(root.release, issues);
-  validateOptionalStringArray(
-    root.boundaries,
-    'allowedPaths',
-    '$.boundaries',
-    issues,
-  );
-  validateOptionalStringArray(
-    root.boundaries,
-    'forbiddenPaths',
-    '$.boundaries',
-    issues,
-  );
+  validateBoundaries(root.boundaries, issues);
 
   return result(issues);
 }
@@ -89,11 +78,13 @@ function validateAcceptance(
   if (!items) return;
   if (!items.length)
     issue(issues, '$.acceptance', 'must contain at least one criterion.');
+  const ids = new Set<string>();
   items.forEach((item, index) => {
     const path = `$.acceptance[${index}]`;
     const record = recordAt(item, path, issues);
     if (!record) return;
     requireNonEmptyString(record, 'id', path, issues);
+    requireUniqueId(record, 'id', path, ids, issues);
     requireNonEmptyString(record, 'statement', path, issues);
     requireNonEmptyStringArray(record, 'evidence', path, issues);
     validateOptionalString(record, 'risk', path, issues);
@@ -108,11 +99,13 @@ function validateVerification(
   if (!items) return;
   if (!items.length)
     issue(issues, '$.verification', 'must contain at least one check.');
+  const ids = new Set<string>();
   items.forEach((item, index) => {
     const path = `$.verification[${index}]`;
     const record = recordAt(item, path, issues);
     if (!record) return;
     requireNonEmptyString(record, 'id', path, issues);
+    requireUniqueId(record, 'id', path, ids, issues);
     requireNonEmptyString(record, 'command', path, issues);
     requireNonEmptyString(record, 'purpose', path, issues);
     validateOptionalString(record, 'environment', path, issues);
@@ -149,14 +142,17 @@ function validateRelease(
   requireNonEmptyStringArray(release, 'rollback', '$.release', issues);
 }
 
-function validateOptionalStringArray(
-  parentValue: unknown,
-  key: string,
-  parentPath: string,
+function validateBoundaries(
+  value: unknown,
   issues: ContractValidationIssue[],
 ): void {
-  if (!isRecord(parentValue) || parentValue[key] === undefined) return;
-  requireStringArray(parentValue, key, parentPath, issues);
+  if (value === undefined) return;
+  const boundaries = recordAt(value, '$.boundaries', issues);
+  if (!boundaries) return;
+  for (const key of ['allowedPaths', 'forbiddenPaths']) {
+    if (boundaries[key] !== undefined)
+      requireStringArray(boundaries, key, '$.boundaries', issues);
+  }
 }
 
 function validateOptionalString(
@@ -237,6 +233,22 @@ function requireNonEmptyStringArray(
       `${parentPath}.${key}`,
       'must contain at least one non-empty string.',
     );
+}
+
+function requireUniqueId(
+  parent: Record<string, unknown>,
+  key: string,
+  parentPath: string,
+  seen: Set<string>,
+  issues: ContractValidationIssue[],
+): void {
+  const value = parent[key];
+  if (typeof value !== 'string' || value.trim() === '') return;
+  if (seen.has(value)) {
+    issue(issues, `${parentPath}.${key}`, 'must be unique within its section.');
+    return;
+  }
+  seen.add(value);
 }
 
 function recordAt(

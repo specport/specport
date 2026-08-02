@@ -64,11 +64,13 @@ system.
 
 ### 2. Generate the baseline artifacts before interpreting them
 
-Run from the repository root. For an installed CLI, use:
+Run from the repository root. For an installed CLI, pin the package version in
+the target repository before running it:
 
 ```text
-npx --yes @specport/specport@latest spec discover . --write SPEC.md
-npx --yes @specport/specport@latest spec discover . --json --write .specport/repository-baseline.json
+npm install --save-dev --exact @specport/specport@<version>
+npx --no-install specport spec discover . --write SPEC.md
+npx --no-install specport spec discover . --json --write .specport/repository-baseline.json
 ```
 
 When working in the SpecPort checkout itself, build first and use the local

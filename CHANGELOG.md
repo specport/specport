@@ -16,3 +16,7 @@ exact npm artifact and clean-consumer smoke test pass.
   Codex metadata, plus `skill list`/`skill export` packaging commands.
 - Added cross-platform CI, package smoke validation, documentation, and
   GitHub Pages source.
+- Added a commit-pinned, license-aware GitHub spec pull with a provenance
+  receipt and no-code-execution boundary.
+- Added a release runbook that separates candidate evidence from npm and Pages
+  publication proof and documents recovery boundaries.

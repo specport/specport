@@ -124,6 +124,10 @@ specport check SPEC.md
 specport check SPEC.md --json
 ```
 
+Run metadata uses the current time by default. When a byte-reproducible draft
+or repository baseline is required for a fixture or release receipt, pass a
+fixed ISO-8601 value with `--generated-at`.
+
 The check returns exit code `0` only for a structurally complete spec that
 declares an accepted/ready status and has no unresolved human decisions. A
 draft or incomplete spec returns `5`; it is a hold signal, not a claim that the
@@ -142,6 +146,20 @@ The validator requires provenance/license ownership, scenario evidence,
 repeatable verification, a human taste rubric, and release compatibility,
 security, observability, rollback, and ship authority fields. It checks
 contract shape; it does not grant approval.
+
+Pull a licensed spec from GitHub at a named ref. SpecPort resolves that ref to
+one commit, fetches only the requested file, records the license and source
+identity, and executes no repository code:
+
+```bash
+specport pull owner/repo@v1.2.0:specs/SPEC.md \
+  --out SPEC.md \
+  --receipt .specport/pulls/owner-repo.json
+```
+
+The pull is read-only until you choose an output path. A receipt is written
+next to `--out` by default, or at `--receipt` when supplied. A missing license,
+unsafe path, missing file, or unresolved GitHub ref is a hold signal.
 
 The included skills are designed for agent environments:
 
@@ -223,14 +241,16 @@ the packed file list; passing TypeScript alone is not release evidence.
 
 Contribution and vulnerability handling are documented in
 [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md).
+The exact publication, registry-verification, Pages, and recovery procedure is
+in [`RELEASE.md`](RELEASE.md).
 
 ## Status
 
 SpecPort is an npm-ready receiver-first release candidate with deterministic
 repository discovery, source-preserving draft authoring, spec readiness checks,
-contract-shape validation, and packaged agent playbook export. Public npm
-publication, a live receiver deployment, cross-platform validation, and
-repeated maintainer adoption are external gates; the project does not claim
-those are proven by local tests.
+contract-shape validation, a provenance-preserving GitHub spec pull, and
+packaged agent playbook export. Public npm publication, a live receiver
+deployment, cross-platform validation, and repeated maintainer adoption are
+external gates; the project does not claim those are proven by local tests.
 
 More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).

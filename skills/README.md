@@ -12,6 +12,8 @@ reproducible behavior matters.
 - `specport-spec-to-production/SKILL.md` executes an accepted contract through
   ordered implementation, verification, final-tree coverage, taste review,
   release-artifact and rollback gates, and an evidence-backed ship receipt.
+  Its `references/` directory includes copyable gate-ledger and ship-receipt
+  templates so the workflow leaves durable evidence rather than only prose.
 
 The skills do not grant an agent permission to approve, publish, deploy, or
 invent missing requirements. They are operating instructions for a bounded

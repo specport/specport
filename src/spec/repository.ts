@@ -90,6 +90,7 @@ const IGNORED_DIRECTORIES = new Set([
 
 export async function discoverRepositorySpec(
   requestedPath = '.',
+  generatedAt = new Date().toISOString(),
 ): Promise<RepositoryBaselineSpec> {
   const requested = resolve(requestedPath);
   const requestedStats = await stat(requested);
@@ -135,7 +136,7 @@ export async function discoverRepositorySpec(
     schemaVersion: VERSION,
     specKind: 'repository-baseline',
     status: 'draft',
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     repository,
     project: {
       name: manifest.name,

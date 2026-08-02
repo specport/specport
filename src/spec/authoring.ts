@@ -46,6 +46,7 @@ const MAX_INPUT_BYTES = 2 * 1024 * 1024;
 export async function createSpecDraft(
   input: string,
   stdin?: NodeJS.ReadableStream,
+  generatedAt = new Date().toISOString(),
 ): Promise<SpecDraft> {
   const source = await readSource(input, stdin);
   if (!source.text.trim()) throw new Error('spec-create: input is empty.');
@@ -58,7 +59,7 @@ export async function createSpecDraft(
     schemaVersion: VERSION,
     specKind: 'authoring-draft',
     status: 'draft',
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     source: {
       kind: source.kind,
       path: source.path,

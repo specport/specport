@@ -82,6 +82,14 @@ try {
   ) {
     throw new Error('Installed skill catalog is incomplete.');
   }
+  const humanSkillList = await run(
+    node,
+    [installedCli, 'skill', 'list'],
+    consumer,
+  );
+  if (!humanSkillList.stdout.includes('SKILLS')) {
+    throw new Error('Installed human skill listing is incomplete.');
+  }
   const skillTarget = join(consumer, 'exported-repo-to-spec');
   const skillExport = JSON.parse(
     (
@@ -100,10 +108,41 @@ try {
       )
     ).stdout,
   );
-  if (skillExport.artifactKind !== 'skill-export') {
+  if (
+    skillExport.artifactKind !== 'skill-export' ||
+    !skillExport.files.includes('agents/openai.yaml') ||
+    !skillExport.files.includes('references/evidence-ledger.template.json')
+  ) {
     throw new Error('Installed skill export did not return an export receipt.');
   }
   await access(join(skillTarget, 'SKILL.md'));
+  const productionTarget = join(consumer, 'exported-spec-to-production');
+  const productionExport = JSON.parse(
+    (
+      await run(
+        node,
+        [
+          installedCli,
+          'skill',
+          'export',
+          'specport-spec-to-production',
+          '--out',
+          productionTarget,
+          '--json',
+        ],
+        consumer,
+      )
+    ).stdout,
+  );
+  if (
+    productionExport.artifactKind !== 'skill-export' ||
+    !productionExport.files.includes('references/gate-ledger.template.md') ||
+    !productionExport.files.includes('references/ship-receipt.template.md')
+  ) {
+    throw new Error('Installed production skill export is incomplete.');
+  }
+  await access(join(productionTarget, 'references', 'gate-ledger.template.md'));
+  await access(join(installedRoot, 'RELEASE.md'));
 
   const contractPath = join(installedRoot, 'examples', 'product-contract.json');
   await access(contractPath);
@@ -118,6 +157,14 @@ try {
   );
   if (validation.valid !== true) {
     throw new Error('Installed contract example did not validate.');
+  }
+  const humanValidation = await run(
+    node,
+    [installedCli, 'spec', 'validate', contractPath],
+    consumer,
+  );
+  if (!humanValidation.stdout.includes('CONTRACT  valid')) {
+    throw new Error('Installed human contract validation is incomplete.');
   }
 
   console.log(

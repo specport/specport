@@ -32,6 +32,11 @@ import {
 } from './spec/authoring.js';
 import { readAndValidateProductContract } from './spec/contract.js';
 import {
+  GitHubSpecPullError,
+  type GitHubSpecPullResult,
+  pullGitHubSpec,
+} from './spec/pull.js';
+import {
   discoverRepositorySpec,
   renderRepositoryBaselineMarkdown,
 } from './spec/repository.js';
@@ -48,6 +53,7 @@ interface Options {
   command:
     | 'coverage'
     | 'help'
+    | 'pull'
     | 'spec-check'
     | 'spec-create'
     | 'spec-discover'
@@ -67,6 +73,9 @@ interface Options {
   receiverUrl?: string;
   contractPath?: string;
   skillName?: string;
+  generatedAt?: string;
+  source?: string;
+  receiptPath?: string;
 }
 
 interface HandoffAnswers {
@@ -104,13 +113,27 @@ export async function runCli(
       stdout.write(helpText());
       return 0;
     }
+    if (options.command === 'pull') {
+      if (!options.source)
+        throw new UsageError('pull requires a GitHub spec source.');
+      const result = await pullGitHubSpec(options.source);
+      await writePullArtifact(options, result, stdout);
+      return 0;
+    }
     if (options.command === 'spec-discover') {
-      const spec = await discoverRepositorySpec(options.path);
+      const spec = await discoverRepositorySpec(
+        options.path,
+        options.generatedAt,
+      );
       await writeSpecArtifact(options, spec, stdout);
       return 0;
     }
     if (options.command === 'spec-create') {
-      const draft = await createSpecDraft(options.path, stdin);
+      const draft = await createSpecDraft(
+        options.path,
+        stdin,
+        options.generatedAt,
+      );
       await writeSpecDraftArtifact(options, draft, stdout);
       return 0;
     }
@@ -281,7 +304,12 @@ export async function runCli(
     await writeResult(options, brief, stdout);
     return exitCode;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message =
+      error instanceof GitHubSpecPullError
+        ? `pull ${error.code}: ${error.message}`
+        : error instanceof Error
+          ? error.message
+          : String(error);
     stderr.write(`specport: ${message}\n`);
     if (error instanceof UsageError) stderr.write(`\n${helpText()}`);
     return error instanceof OutputError ? 4 : 2;
@@ -326,6 +354,7 @@ function parseArgs(argv: readonly string[]): Options {
   if (rawCommand === 'spec') {
     return parseSpecArgs(args);
   }
+  if (rawCommand === 'pull') return parsePullArgs(args);
   if (
     rawCommand === 'create' ||
     rawCommand === 'check' ||
@@ -407,6 +436,7 @@ function parseSpecArgs(args: string[]): Options {
   const requestedSubcommand = args.shift();
   const subcommand =
     requestedSubcommand === 'map' ? 'discover' : requestedSubcommand;
+  if (subcommand === 'pull') return parsePullArgs(args);
   if (subcommand === 'discover') {
     const options: Options = {
       ...baseOptions('spec-discover'),
@@ -429,6 +459,11 @@ function parseSpecArgs(args: string[]): Options {
         case '--write':
         case '--out':
           options.writePath = requiredValue(args, ++index, arg);
+          break;
+        case '--generated-at':
+          options.generatedAt = normalizedGeneratedAt(
+            requiredValue(args, ++index, arg),
+          );
           break;
         case '--help':
         case '-h':
@@ -490,6 +525,11 @@ function parseSpecArgs(args: string[]): Options {
         case '--out':
           options.writePath = requiredValue(args, ++index, arg);
           break;
+        case '--generated-at':
+          options.generatedAt = normalizedGeneratedAt(
+            requiredValue(args, ++index, arg),
+          );
+          break;
         case '--help':
         case '-h':
           throw new UsageError(helpText());
@@ -546,6 +586,53 @@ function parseSpecArgs(args: string[]): Options {
   throw new UsageError(
     'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, or `spec validate <contract.json>`.',
   );
+}
+
+function parsePullArgs(args: string[]): Options {
+  const options: Options = {
+    ...baseOptions('pull'),
+    path: '.',
+    json: false,
+    force: false,
+    interactive: false,
+  };
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    switch (arg) {
+      case '--json':
+        options.json = true;
+        break;
+      case '--force':
+        options.force = true;
+        break;
+      case '--out':
+      case '--write':
+        options.writePath = requiredValue(args, ++index, arg);
+        break;
+      case '--receipt':
+        options.receiptPath = requiredValue(args, ++index, arg);
+        break;
+      case '--help':
+      case '-h':
+        throw new UsageError(helpText());
+      default:
+        if (arg.startsWith('-')) throw new UsageError(`Unknown option: ${arg}`);
+        positional.push(arg);
+    }
+  }
+  if (positional.length !== 1)
+    throw new UsageError(
+      'pull requires one GitHub source in owner/repo@ref[:path] form.',
+    );
+  const source = positional[0];
+  if (!source)
+    throw new UsageError(
+      'pull requires one GitHub source in owner/repo@ref[:path] form.',
+    );
+  options.source = source;
+  return options;
 }
 
 function parseSkillArgs(args: string[]): Options {
@@ -634,6 +721,13 @@ function requiredValue(
   if (!value || value.startsWith('-'))
     throw new UsageError(`${option} requires a value.`);
   return value;
+}
+
+function normalizedGeneratedAt(value: string): string {
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime()))
+    throw new UsageError('--generated-at must be a valid ISO-8601 timestamp.');
+  return timestamp.toISOString();
 }
 
 async function readExpectedScope(
@@ -1035,6 +1129,56 @@ async function writeSpecArtifact(
     }
   }
   stdout.write(options.json ? json : markdown);
+}
+
+async function writePullArtifact(
+  options: Options,
+  result: GitHubSpecPullResult,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const outputPath = options.writePath ? resolve(options.writePath) : undefined;
+  const receiptPath = options.receiptPath
+    ? resolve(options.receiptPath)
+    : outputPath
+      ? `${outputPath}.receipt.json`
+      : undefined;
+  if (outputPath && receiptPath && outputPath === receiptPath)
+    throw new UsageError('pull output and receipt paths must be different.');
+
+  if (outputPath)
+    await writeSpecOutput(outputPath, result.rawContent, options.force);
+  if (receiptPath) {
+    await writeSpecOutput(
+      receiptPath,
+      `${JSON.stringify(result.receipt, null, 2)}\n`,
+      options.force,
+    );
+  }
+
+  const payload = {
+    schemaVersion: VERSION,
+    artifactKind: 'github-spec-pull',
+    receipt: result.receipt,
+    content: result.rawContent,
+    outputPath: outputPath ?? null,
+    receiptPath: receiptPath ?? null,
+  };
+  if (options.json) {
+    stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+    return;
+  }
+  stdout.write(
+    [
+      'PULL       complete',
+      `SOURCE     ${result.receipt.canonicalSource}`,
+      `COMMIT     ${result.receipt.commit}`,
+      `LICENSE    ${result.receipt.license}`,
+      `CONTENT    ${result.receipt.path}${outputPath ? ` -> ${outputPath}` : ' (not written; use --out)'}`,
+      `RECEIPT    ${receiptPath ?? '(not written; use --receipt or --out)'}`,
+      'EXECUTION  none',
+      '',
+    ].join('\n'),
+  );
 }
 
 async function writeSpecDraftArtifact(
@@ -1655,9 +1799,10 @@ function helpText(): string {
 Usage:
   specport coverage [path] [options]
   specport review --quick [path] [options]  (legacy alias)
-  specport spec create <input> [--out SPEC.md] [--json] [--force]
+  specport pull <owner/repo@ref[:path]> [--out SPEC.md] [--receipt FILE] [--json] [--force]
+  specport spec create <input> [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec check <SPEC.md> [--json] [--write REPORT]
-  specport spec discover [path] [--out SPEC.md] [--json] [--force]
+  specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec validate [contract.json] [--json]
   specport skill list [--json]
   specport skill export <name> --out <directory> [--json] [--force]
@@ -1671,6 +1816,7 @@ Spec workflows:
   spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec validate    validate a human-owned product contract before implementation
+  pull            fetch one licensed spec from GitHub at a resolved commit; never executes repository code
   skill list       list the packaged agent playbooks
   skill export     copy one playbook to a host agent's skill directory
 
@@ -1684,6 +1830,9 @@ Options:
   --force                    allow replacing --write target
   --interactive              optional post-hoc handoff questions
   --receiver-url <url>       explicit local receiver URL
+  --generated-at <timestamp> use a fixed timestamp for reproducible spec artifacts
+  --out <file>               save a pulled spec artifact
+  --receipt <file>            save a pulled-spec provenance receipt
 
 Exit codes:
   0  diagnostic completed or exact coverage is complete

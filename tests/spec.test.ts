@@ -75,6 +75,45 @@ describe('SpecPort contract workflow', () => {
     ).toBe(true);
   });
 
+  it('rejects malformed boundaries and duplicate contract identifiers', async () => {
+    const example = JSON.parse(
+      await readFile('examples/product-contract.json', 'utf8'),
+    ) as Record<string, unknown>;
+    const acceptance = example.acceptance as [
+      Record<string, unknown>,
+      ...Record<string, unknown>[],
+    ];
+    const verification = example.verification as [
+      Record<string, unknown>,
+      ...Record<string, unknown>[],
+    ];
+
+    const result = validateProductContract({
+      ...example,
+      boundaries: 'not-an-object',
+      acceptance: [acceptance[0], { ...acceptance[0] }],
+      verification: [verification[0], { ...verification[0] }],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: '$.boundaries',
+          message: 'must be an object.',
+        }),
+        expect.objectContaining({
+          path: '$.acceptance[1].id',
+          message: 'must be unique within its section.',
+        }),
+        expect.objectContaining({
+          path: '$.verification[1].id',
+          message: 'must be unique within its section.',
+        }),
+      ]),
+    );
+  });
+
   it('turns arbitrary input into a provenance-preserving draft', async () => {
     const draft = await createSpecDraft(
       '# A small import tool\n\nIt should help a maintainer move data safely.\n',
@@ -89,6 +128,31 @@ describe('SpecPort contract workflow', () => {
     expect(markdown).toContain('Source SHA-256');
     expect(markdown).toContain('It should help a maintainer move data safely.');
     expect(markdown).toContain('[NEEDS HUMAN INPUT]');
+  });
+
+  it('supports fixed timestamps for reproducible draft and baseline artifacts', async () => {
+    const generatedAt = '2026-08-02T19:15:00.000Z';
+    const firstDraft = await createSpecDraft(
+      '# Stable notes\n\nKeep the output reproducible.\n',
+      undefined,
+      generatedAt,
+    );
+    const secondDraft = await createSpecDraft(
+      '# Stable notes\n\nKeep the output reproducible.\n',
+      undefined,
+      generatedAt,
+    );
+    const firstBaseline = await discoverRepositorySpec(
+      process.cwd(),
+      generatedAt,
+    );
+    const secondBaseline = await discoverRepositorySpec(
+      process.cwd(),
+      generatedAt,
+    );
+
+    expect(secondDraft).toEqual(firstDraft);
+    expect(secondBaseline).toEqual(firstBaseline);
   });
 
   it('distinguishes a grounded draft from an accepted, checkable spec', async () => {

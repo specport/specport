@@ -39,7 +39,8 @@
     "LICENSE",
     "CONTRIBUTING.md",
     "SECURITY.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "RELEASE.md"
   ],
   "scripts": {
     "clean": "node -e \"import('node:fs/promises').then(({rm}) => rm('dist', { recursive: true, force: true }))\"",

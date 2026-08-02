@@ -40,8 +40,9 @@ Use these final statuses precisely:
 Create a new, non-overwriting evidence directory for each run, for example
 `.specport/evidence/<run-id>/`. Use the repository's documented evidence
 location when one exists. Keep disposable logs and tarballs there; commit them
-only when the contract or owner requires durable release evidence. Record a
-`gate-ledger.md` (or equivalent machine-readable record) with one row per gate:
+only when the contract or owner requires durable release evidence. Start
+`gate-ledger.md` from `references/gate-ledger.template.md` (or use an
+equivalent machine-readable record) and keep one row per gate:
 
 ```text
 gate | status | owner | evidence | tree/artifact identity | recorded-at | next action
@@ -65,6 +66,23 @@ Capture these identities before editing and again before the receipt:
 
 If any of those identities cannot be established, mark the affected gate
 `BLOCKED` rather than filling the field with a guess.
+
+## CLI resolution and pinning
+
+Record the exact SpecPort version before G0. For a published dependency, install
+the requested version explicitly and invoke the local binary through the
+project installation:
+
+```text
+npm install --save-dev --exact @specport/specport@<version>
+npx --no-install specport --version
+```
+
+For a SpecPort checkout, use `npm ci`, `npm run build`, and
+`node dist/cli.js --version`. Do not silently fall back to an unpinned global
+binary. If the target repository is not SpecPort and has no
+`verify:package` script, run the exact commands declared by its accepted
+contract instead and record that fallback as the target's G3/G6 evidence.
 
 ## Ordered gates
 
@@ -219,7 +237,8 @@ before the last source, dependency, or taste change. Verify the target-specific
 install, launch, upgrade, compatibility, privacy, permissions, observability,
 versioning, and documentation paths.
 
-For npm, use the package's declared checks and the exact tarball:
+For npm, use the package's declared checks and the exact tarball. When the
+package declares `verify:package`, run it before packing:
 
 ```text
 npm run verify:package
@@ -263,9 +282,10 @@ risk. A prose sentence saying "rollback is available" is not evidence.
 
 ### G8. Ship receipt and decision
 
-Write the receipt only after G0-G7 have current evidence. Use this shape in
-`<evidence-dir>/ship-receipt.md` (and mirror it in JSON when automation needs
-to consume it):
+Write the receipt only after G0-G7 have current evidence. Start from
+`references/ship-receipt.template.md` and save it as
+`<evidence-dir>/ship-receipt.md` (mirror it in JSON when automation needs to
+consume it):
 
 ```markdown
 # SpecPort ship receipt
@@ -354,8 +374,11 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   approval.
 - `specport spec discover` observes a repository baseline; it does not infer
   product intent or acceptance.
+- `specport pull <owner/repo@ref[:path]> [--out SPEC.md]` fetches one licensed
+  GitHub file at a resolved commit, writes a provenance receipt when requested,
+  and executes no repository code.
 
-Do not describe roadmap verbs such as `pull`, `cover`, `remix`, or `build` as
-implemented CLI behavior unless the installed version's help and runtime
-prove them. Use the host agent's bounded coding tools for implementation and
-the commands above for the evidence surfaces they actually provide.
+Do not describe roadmap verbs such as `cover`, `remix`, or `build` as
+implemented CLI behavior unless the installed version's help and runtime prove
+them. Use the host agent's bounded coding tools for implementation and the
+commands above for the evidence surfaces they actually provide.
