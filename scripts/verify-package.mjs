@@ -468,7 +468,11 @@ async function run(command, args, cwd) {
   try {
     return await execFileAsync(executable, executableArgs, {
       cwd,
-      env: { ...process.env, npm_config_update_notifier: 'false' },
+      env: {
+        ...process.env,
+        npm_config_dry_run: 'false',
+        npm_config_update_notifier: 'false',
+      },
       maxBuffer: 4 * 1024 * 1024,
     });
   } catch (error) {
@@ -487,7 +491,11 @@ async function runAllowFailure(command, args, cwd) {
   try {
     const result = await execFileAsync(executable, executableArgs, {
       cwd,
-      env: { ...process.env, npm_config_update_notifier: 'false' },
+      env: {
+        ...process.env,
+        npm_config_dry_run: 'false',
+        npm_config_update_notifier: 'false',
+      },
       maxBuffer: 4 * 1024 * 1024,
     });
     return { code: 0, stdout: result.stdout, stderr: result.stderr };
