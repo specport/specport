@@ -14,8 +14,8 @@
 - Languages: JavaScript, TypeScript
 - Runtimes: Node.js >=20
 - Package manager: npm
-- Files observed: 50
-- Base: `ae96cea69250528cbb75f89107d8d3005d2c1816`
+- Files observed: 51
+- Base: `161c949130e4758d6bb425bda9cf932ba0c92eb7`
 - Working tree: stable
 
 ## Declared entrypoints
@@ -114,32 +114,11 @@ Declared scripts:
 
 ### Changed paths at generation time
 
-- `.github/workflows/ci.yml`
-- `CHANGELOG.md`
-- `GOAL.md`
-- `README.md`
-- `RELEASE.md`
-- `SPEC.md`
-- `docs/index.html`
-- `package.json`
-- `schemas/product-contract.schema.json`
-- `scripts/verify-package.mjs`
-- `skills/README.md`
-- `skills/specport-repo-to-spec/SKILL.md`
-- `skills/specport-spec-to-production/SKILL.md`
-- `skills/specport-spec-to-production/references/gate-ledger.template.md`
-- `skills/specport-spec-to-production/references/ship-receipt.template.md`
-- `src/cli.ts`
-- `src/spec/authoring.ts`
-- `src/spec/contract.ts`
-- `src/spec/pull.ts`
-- `src/spec/repository.ts`
-- `tests/cli.test.ts`
-- `tests/pull.test.ts`
-- `tests/spec.test.ts`
+- None observed relative to the selected base.
 
 ### Sample of observed files
 
+- `.gitattributes`
 - `.github/workflows/ci.yml`
 - `.github/workflows/pages.yml`
 - `.gitignore`
@@ -179,7 +158,6 @@ Declared scripts:
 - `src/spec/authoring.ts`
 - `src/spec/contract.ts`
 - `src/spec/pull.ts`
-- `src/spec/repository.ts`
 
 ## Gaps
 
@@ -209,35 +187,11 @@ The JSON form is the evidence record. Treat fields marked missing as unresolved 
   "repository": {
     "path": "C:\\Users\\stanc\\github\\specport",
     "repositoryId": "c:/users/stanc/github/specport",
-    "headCommit": "ae96cea69250528cbb75f89107d8d3005d2c1816",
-    "baseCommit": "ae96cea69250528cbb75f89107d8d3005d2c1816",
+    "headCommit": "161c949130e4758d6bb425bda9cf932ba0c92eb7",
+    "baseCommit": "161c949130e4758d6bb425bda9cf932ba0c92eb7",
     "baseKind": "commit",
     "stable": true,
-    "changedPaths": [
-      ".github/workflows/ci.yml",
-      "CHANGELOG.md",
-      "GOAL.md",
-      "README.md",
-      "RELEASE.md",
-      "SPEC.md",
-      "docs/index.html",
-      "package.json",
-      "schemas/product-contract.schema.json",
-      "scripts/verify-package.mjs",
-      "skills/README.md",
-      "skills/specport-repo-to-spec/SKILL.md",
-      "skills/specport-spec-to-production/SKILL.md",
-      "skills/specport-spec-to-production/references/gate-ledger.template.md",
-      "skills/specport-spec-to-production/references/ship-receipt.template.md",
-      "src/cli.ts",
-      "src/spec/authoring.ts",
-      "src/spec/contract.ts",
-      "src/spec/pull.ts",
-      "src/spec/repository.ts",
-      "tests/cli.test.ts",
-      "tests/pull.test.ts",
-      "tests/spec.test.ts"
-    ]
+    "changedPaths": []
   },
   "project": {
     "name": "@specport/specport",
@@ -311,8 +265,9 @@ The JSON form is the evidence record. Treat fields marked missing as unresolved 
     ]
   },
   "evidence": {
-    "fileCount": 50,
+    "fileCount": 51,
     "sampleFiles": [
+      ".gitattributes",
       ".github/workflows/ci.yml",
       ".github/workflows/pages.yml",
       ".gitignore",
@@ -351,8 +306,7 @@ The JSON form is the evidence record. Treat fields marked missing as unresolved 
       "src/receiver/githuman.ts",
       "src/spec/authoring.ts",
       "src/spec/contract.ts",
-      "src/spec/pull.ts",
-      "src/spec/repository.ts"
+      "src/spec/pull.ts"
     ],
     "importantFiles": [
       "CONTRIBUTING.md",
