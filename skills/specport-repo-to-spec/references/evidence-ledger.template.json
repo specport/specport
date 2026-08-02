@@ -6,7 +6,8 @@
     "identity": null,
     "headCommit": null,
     "authoritativeTree": "REPLACE_WITH_COMMIT_OR_EXPLICIT_WORKING_TREE",
-    "baselineArtifact": ".specport/repository-baseline.json"
+    "baselineArtifact": ".specport/repository-baseline.json",
+    "mapArtifact": ".specport/repo-map.json"
   },
   "observed": [
     {

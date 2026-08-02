@@ -131,8 +131,19 @@ fixed ISO-8601 value with `--generated-at`.
 The check returns exit code `0` only for a structurally complete spec that
 declares an accepted/ready status and has no unresolved human decisions. A
 draft or incomplete spec returns `5`; it is a hold signal, not a claim that the
-product is bad. `specport map .` is currently an alias for the grounded
-repository discovery path; AST-specific mapping remains a roadmap item.
+product is bad.
+
+Map the repository into a bounded implementation map without executing its
+code:
+
+```bash
+specport map . --json --write .specport/repo-map.json
+```
+
+The map records observed file roles and package entrypoints, infers only
+simple static symbols/import edges/HTTP surfaces, and lists unknowns when the
+scan is truncated, dynamic, binary, or unresolved. It is an edit-and-review
+map, not a runtime behavior proof or a product-intent contract.
 
 Validate a human-owned machine-readable contract before implementation:
 
@@ -248,9 +259,10 @@ in [`RELEASE.md`](RELEASE.md).
 
 SpecPort is an npm-ready receiver-first release candidate with deterministic
 repository discovery, source-preserving draft authoring, spec readiness checks,
-contract-shape validation, a provenance-preserving GitHub spec pull, and
-packaged agent playbook export. Public npm publication, a live receiver
-deployment, cross-platform validation, and repeated maintainer adoption are
-external gates; the project does not claim those are proven by local tests.
+contract-shape validation, a provenance-preserving GitHub spec pull, bounded
+static repository mapping, and packaged agent playbook export. Public npm
+publication, a live receiver deployment, cross-platform validation, and
+repeated maintainer adoption are external gates; the project does not claim
+those are proven by local tests.
 
 More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).

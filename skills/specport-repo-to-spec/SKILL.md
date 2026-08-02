@@ -71,6 +71,7 @@ the target repository before running it:
 npm install --save-dev --exact @specport/specport@<version>
 npx --no-install specport spec discover . --write SPEC.md
 npx --no-install specport spec discover . --json --write .specport/repository-baseline.json
+npx --no-install specport spec map . --json --write .specport/repo-map.json
 ```
 
 When working in the SpecPort checkout itself, build first and use the local
@@ -80,12 +81,17 @@ binary instead:
 npm run build
 node dist/cli.js spec discover . --write SPEC.md
 node dist/cli.js spec discover . --json --write .specport/repository-baseline.json
+node dist/cli.js spec map . --json --write .specport/repo-map.json
 ```
 
 The first command creates the human-readable observed draft. The second saves
 the complete machine-readable baseline. The CLI also prints its result; the
 saved files are the durable evidence artifacts. A baseline is an observation,
-not a product contract, and its checks are discovered rather than run.
+not a product contract, and its checks are discovered rather than run. The map
+is a separate bounded static artifact: it records file roles, simple symbols,
+local import edges, callable surfaces, scan limits, and unknowns. It never
+executes repository code and must not be presented as a runtime or intent
+proof.
 
 Do not pass `--force` by default. If `SPEC.md` or an evidence file already
 exists, preserve the human-owned artifact and either ask before replacing it
@@ -106,6 +112,8 @@ must contain:
 
 - `OBS-*` claims with a source path plus line/heading/symbol locator, Git ref,
   or an exact command result;
+- map observations that cite `.specport/repo-map.json` and preserve whether a
+  fact was observed, inferred, or unknown;
 - `INF-*` interpretations that cite their supporting `OBS-*` IDs and remain
   `needsHumanConfirmation: true` until accepted;
 - `UNK-*` questions with materiality and the workflow stage they block;
@@ -193,6 +201,7 @@ Return the exact paths and status of:
 - `SPEC.md` (or a clearly named generated draft when an existing file was
   preserved);
 - `.specport/repository-baseline.json`;
+- `.specport/repo-map.json`;
 - `.specport/repo-to-spec/evidence-ledger.json`;
 - `.specport/repo-to-spec/spec-check.json`;
 - `.specport/contract.json` and its validation result only when the owner has

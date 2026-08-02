@@ -176,7 +176,7 @@ The target command surface is:
 | specport create <input> | Turn arbitrary text into a draft spec |
 | specport check <spec> | Check structure, completeness, provenance, and readiness |
 | specport pull <github-ref> | Discover and fetch a spec at an exact ref |
-| specport map <repo> | AST-map a repository into an observed spec draft |
+| specport map <repo> | Generate a bounded static repository map with evidence labels and explicit unknowns |
 | specport cover <spec> | Implement a spec for a target repo or stack |
 | specport remix <spec> | Fork/adapt a spec while preserving lineage |
 | specport build <spec> | Run or hand off a bounded implementation workflow |
@@ -260,19 +260,20 @@ For an existing project, the parallel entry point is:
 ~~~
 npx --yes @specport/specport@latest spec discover . --write SPEC.md
 
-# Current grounded mapping alias; AST/evidence mapping remains a later phase:
-specport map . --out SPEC.md
+# Map edit zones, symbols, local imports, and callable surfaces without executing code:
+specport map . --json --write .specport/repo-map.json
 
 # Install a packaged playbook into a host agent's native skill directory:
 specport skill list
 specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
-The create, check, discover, validate, pull, map-alias, skill list, and skill
-export commands are implemented and tested in the current foundation. Pull
-currently covers one exact GitHub file at a resolved commit with license and
-provenance evidence; manifest-based discovery, AST-specific mapping, cover,
-remix, build, search, and public discovery remain roadmap work.
+The create, check, discover, validate, pull, map, skill list, and skill export
+commands are implemented and tested in the current foundation. Map is a
+bounded static/token scan, not a full language AST or runtime behavior proof.
+Pull currently covers one exact GitHub file at a resolved commit with license
+and provenance evidence; manifest-based discovery, full AST-specific mapping,
+cover, remix, build, search, and public discovery remain roadmap work.
 
 ## Phased roadmap
 
@@ -287,7 +288,8 @@ The current codebase is already an early spec foundation:
 - spec create preserves arbitrary text as a provenance-bearing draft, and spec
   check reports whether a SPEC.md is structurally ready, human-accepted, and
   free of unresolved decisions;
-- spec map is currently an explicit alias for grounded repository discovery;
+- spec map produces a deterministic bounded static map of file roles, symbols,
+  local import edges, package/HTTP/CLI surfaces, safety limits, and unknowns;
 - the repository includes native skills for repository-to-spec and
   spec-to-production workflows;
 - skill list/export exposes those packaged playbooks to a host agent without
@@ -297,8 +299,8 @@ The current codebase is already an early spec foundation:
 
 These are valuable foundations and evidence adapters, but they are not yet the
 full product described here. The current code does not yet provide
-manifest-based discovery, full AST mapping, lineage-aware cover/remix, a
-general build engine, public discovery, or ratings.
+manifest-based discovery, full language AST mapping, lineage-aware
+cover/remix, a general build engine, public discovery, or ratings.
 
 Keep current commands and artifacts honest. Do not describe unbuilt lifecycle
 commands as if they already ship, and do not let the coverage adapter become
@@ -321,9 +323,11 @@ against fixture repositories before adding a public index.
 
 ### Phase 3: repository-to-spec mapping
 
-Implement AST and evidence adapters for a small number of useful languages.
-Validate observed facts against fixture repositories and make inferred intent
-and unknown behavior visible in the generated spec.
+Extend the bounded static mapper with AST and evidence adapters for a small
+number of useful languages. Validate observed facts against fixture
+repositories and make inferred intent and unknown behavior visible in the
+generated spec. The mapper must remain read-only and must never claim runtime
+behavior from syntax alone.
 
 ### Phase 4: cover, remix, and AI skills
 

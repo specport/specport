@@ -374,6 +374,10 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   approval.
 - `specport spec discover` observes a repository baseline; it does not infer
   product intent or acceptance.
+- `specport spec map [path] [--json]` creates a read-only bounded static map of
+  files, simple symbols, local imports, and explicit surfaces. Inferred edges
+  and all scan limits/unknowns remain labeled; it does not prove runtime
+  behavior, security, taste, or product intent.
 - `specport pull <owner/repo@ref[:path]> [--out SPEC.md]` fetches one licensed
   GitHub file at a resolved commit, writes a provenance receipt when requested,
   and executes no repository code.

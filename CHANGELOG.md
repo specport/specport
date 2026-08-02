@@ -18,5 +18,8 @@ exact npm artifact and clean-consumer smoke test pass.
   GitHub Pages source.
 - Added a commit-pinned, license-aware GitHub spec pull with a provenance
   receipt and no-code-execution boundary.
+- Added a bounded, deterministic repository map for file roles, static symbols,
+  local import edges, package/HTTP/CLI surfaces, scan limits, and explicit
+  unknowns; it executes no repository code and is not a runtime contract.
 - Added a release runbook that separates candidate evidence from npm and Pages
   publication proof and documents recovery boundaries.

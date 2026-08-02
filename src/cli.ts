@@ -40,6 +40,7 @@ import {
   renderSpecDraftMarkdown,
 } from './spec/authoring.js';
 import { readAndValidateProductContract } from './spec/contract.js';
+import { mapRepository, renderRepositoryMapMarkdown } from './spec/map.js';
 import {
   GitHubSpecPullError,
   type GitHubSpecPullResult,
@@ -66,6 +67,7 @@ interface Options {
     | 'spec-check'
     | 'spec-create'
     | 'spec-discover'
+    | 'spec-map'
     | 'spec-validate'
     | 'skill-export'
     | 'skill-list'
@@ -135,6 +137,11 @@ export async function runCli(
         options.generatedAt,
       );
       await writeSpecArtifact(options, spec, stdout);
+      return 0;
+    }
+    if (options.command === 'spec-map') {
+      const map = await mapRepository(options.path, options.generatedAt);
+      await writeMapArtifact(options, map, stdout);
       return 0;
     }
     if (options.command === 'spec-create') {
@@ -443,12 +450,11 @@ function parseArgs(argv: readonly string[]): Options {
 
 function parseSpecArgs(args: string[]): Options {
   const requestedSubcommand = args.shift();
-  const subcommand =
-    requestedSubcommand === 'map' ? 'discover' : requestedSubcommand;
+  const subcommand = requestedSubcommand;
   if (subcommand === 'pull') return parsePullArgs(args);
-  if (subcommand === 'discover') {
+  if (subcommand === 'discover' || subcommand === 'map') {
     const options: Options = {
-      ...baseOptions('spec-discover'),
+      ...baseOptions(subcommand === 'map' ? 'spec-map' : 'spec-discover'),
       path: '.',
       json: false,
       force: false,
@@ -593,7 +599,7 @@ function parseSpecArgs(args: string[]): Options {
     return options;
   }
   throw new UsageError(
-    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, or `spec validate <contract.json>`.',
   );
 }
 
@@ -1138,6 +1144,54 @@ async function writeSpecArtifact(
     }
   }
   stdout.write(options.json ? json : markdown);
+}
+
+async function writeMapArtifact(
+  options: Options,
+  map: Awaited<ReturnType<typeof mapRepository>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(map, null, 2)}\n`;
+  const markdown = renderRepositoryMapMarkdown(map);
+  if (options.writePath) {
+    const target = isAbsolute(options.writePath)
+      ? options.writePath
+      : resolve(options.path, options.writePath);
+    if (!options.force) {
+      try {
+        await access(target);
+        throw new OutputError(`Refusing to overwrite ${target}; pass --force.`);
+      } catch (error) {
+        if (error instanceof OutputError) throw error;
+      }
+    }
+    try {
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, options.json ? json : markdown, 'utf8');
+    } catch (error) {
+      throw new OutputError(
+        `Could not write ${target}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  if (options.json) {
+    stdout.write(json);
+    return;
+  }
+  stdout.write(
+    [
+      'MAP        draft',
+      `REPOSITORY ${map.repository.path}`,
+      `FILES      ${map.repository.fileCount}`,
+      `SYMBOLS    ${map.symbols.length}`,
+      `IMPORTS    ${map.imports.length}`,
+      `SURFACES   ${map.surfaces.length}`,
+      `UNKNOWNS   ${map.unknowns.length}`,
+      'EXECUTION  none',
+      ...(options.writePath ? [`WROTE      ${options.writePath}`] : []),
+      '',
+    ].join('\n'),
+  );
 }
 
 async function writePullArtifact(
@@ -1828,18 +1882,20 @@ Usage:
   specport spec create <input> [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec check <SPEC.md> [--json] [--write REPORT]
   specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
+  specport spec map [path] [--out MAP.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec validate [contract.json] [--json]
   specport skill list [--json]
   specport skill export <name> --out <directory> [--json] [--force]
   specport create <input> ...  (alias)
   specport check <SPEC.md> ... (alias)
-  specport map [path] ...       (alias of spec discover)
+  specport map [path] ...       (top-level alias for spec map)
   specport --version
 
 Spec workflows:
   spec create      turn text into a deterministic draft while preserving source
   spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
+  spec map        generate a bounded static repository map with explicit unknowns
   spec validate    validate a human-owned product contract before implementation
   pull            fetch one licensed spec from GitHub at a resolved commit; never executes repository code
   skill list       list the packaged agent playbooks

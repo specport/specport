@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/repository-map.schema.json",
+  "title": "SpecPort bounded repository map",
+  "description": "A deterministic, read-only static map. Inferred syntax is not runtime or product-intent proof.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "specKind",
+    "status",
+    "generatedAt",
+    "repository",
+    "safety",
+    "files",
+    "symbols",
+    "imports",
+    "surfaces",
+    "unknowns",
+    "nextActions"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "specKind": { "const": "repository-map" },
+    "status": { "const": "draft" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repository": {
+      "type": "object",
+      "required": ["path", "repositoryId", "headCommit", "baseCommit", "stable", "fileCount"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "repositoryId": { "type": ["string", "null"] },
+        "headCommit": { "type": ["string", "null"] },
+        "baseCommit": { "type": ["string", "null"] },
+        "stable": { "type": ["boolean", "null"] },
+        "fileCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["codeExecuted", "networkAccessed", "maxFiles", "maxFileBytes", "maxTotalBytes", "truncated"],
+      "properties": {
+        "codeExecuted": { "const": false },
+        "networkAccessed": { "const": false },
+        "maxFiles": { "type": "integer", "minimum": 1 },
+        "maxFileBytes": { "type": "integer", "minimum": 1 },
+        "maxTotalBytes": { "type": "integer", "minimum": 1 },
+        "truncated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } },
+    "symbols": { "type": "array", "items": { "$ref": "#/$defs/symbol" } },
+    "imports": { "type": "array", "items": { "$ref": "#/$defs/import" } },
+    "surfaces": { "type": "array", "items": { "$ref": "#/$defs/surface" } },
+    "unknowns": { "type": "array", "items": { "$ref": "#/$defs/unknown" } },
+    "nextActions": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "file": {
+      "type": "object",
+      "required": ["path", "bytes", "lines", "language", "role", "evidence", "parseStatus"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "lines": { "type": ["integer", "null"], "minimum": 0 },
+        "language": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "evidence": { "const": "observed" },
+        "parseStatus": { "type": "string", "enum": ["parsed", "skipped-binary", "skipped-limit", "unsupported"] }
+      },
+      "additionalProperties": false
+    },
+    "symbol": {
+      "type": "object",
+      "required": ["name", "kind", "path", "line", "visibility", "evidence"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "visibility": { "type": "string", "enum": ["public", "private", "unknown"] },
+        "evidence": { "const": "inferred" }
+      },
+      "additionalProperties": false
+    },
+    "import": {
+      "type": "object",
+      "required": ["from", "specifier", "line", "resolvedPath", "evidence"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "specifier": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "resolvedPath": { "type": ["string", "null"] },
+        "evidence": { "const": "inferred" }
+      },
+      "additionalProperties": false
+    },
+    "surface": {
+      "type": "object",
+      "required": ["kind", "value", "path", "line", "evidence"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["http-route", "cli-command", "package-entrypoint"] },
+        "value": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "line": { "type": ["integer", "null"], "minimum": 1 },
+        "evidence": { "type": "string", "enum": ["observed", "inferred"] }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["code", "message", "evidence"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "evidence": { "const": "unknown" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -71,6 +71,23 @@ try {
     throw new Error('Installed create command did not return an authoring draft.');
   }
 
+  const repositoryMap = JSON.parse(
+    (
+      await run(
+        node,
+        [installedCli, 'spec', 'map', consumer, '--json'],
+        consumer,
+      )
+    ).stdout,
+  );
+  if (
+    repositoryMap.specKind !== 'repository-map' ||
+    repositoryMap.safety?.codeExecuted !== false ||
+    repositoryMap.safety?.networkAccessed !== false
+  ) {
+    throw new Error('Installed repository mapper did not preserve its safety boundary.');
+  }
+
   const skillList = JSON.parse(
     (
       await run(node, [installedCli, 'skill', 'list', '--json'], consumer)
@@ -146,6 +163,7 @@ try {
 
   const contractPath = join(installedRoot, 'examples', 'product-contract.json');
   await access(contractPath);
+  await access(join(installedRoot, 'schemas', 'repository-map.schema.json'));
   const validation = JSON.parse(
     (
       await run(
