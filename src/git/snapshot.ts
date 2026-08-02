@@ -35,6 +35,13 @@ export interface GitStatusRecord {
   state: ChangeState;
 }
 
+interface IndexEntry {
+  mode: string;
+  object: string;
+  stage: string;
+  path: string;
+}
+
 export async function discoverRepository(
   start = process.cwd(),
 ): Promise<GitRepository> {
@@ -93,10 +100,14 @@ export async function captureFinalTree(
       await tryRunGit(repository.root, ['rev-parse', '--git-path', 'index'])
     )?.trim();
     let copiedActualIndex = false;
+    let preserveActualIndexModes = false;
+    let originalIndexEntries: IndexEntry[] = [];
     if (actualIndexPath) {
       try {
         await copyFile(resolve(repository.root, actualIndexPath), indexPath);
         copiedActualIndex = true;
+        originalIndexEntries = await readIndexEntries(repository.root);
+        preserveActualIndexModes = true;
       } catch {
         copiedActualIndex = false;
       }
@@ -111,6 +122,7 @@ export async function captureFinalTree(
     try {
       await runGit(repository.root, ['add', '--all', '--', '.'], environment);
     } catch {
+      preserveActualIndexModes = false;
       if (!copiedActualIndex)
         throw new Error('Could not materialize the final Git tree.');
       if (base.commit) {
@@ -119,6 +131,14 @@ export async function captureFinalTree(
         await runGit(repository.root, ['read-tree', '--empty'], environment);
       }
       await runGit(repository.root, ['add', '--all', '--', '.'], environment);
+    }
+    if (preserveActualIndexModes && base.commit) {
+      await preserveIndexOnlyModes(
+        repository.root,
+        base.commit,
+        environment,
+        originalIndexEntries,
+      );
     }
     const diff = await runGit(
       repository.root,
@@ -191,6 +211,88 @@ export async function captureFinalTree(
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }
+}
+
+async function preserveIndexOnlyModes(
+  repositoryPath: string,
+  baseCommit: string,
+  environment: Readonly<Record<string, string | undefined>>,
+  originalIndexEntries: readonly IndexEntry[],
+): Promise<void> {
+  const baseModes = new Map(await readTreeEntries(repositoryPath, baseCommit));
+  const stagedModeChanges = originalIndexEntries.filter((entry) => {
+    if (entry.stage !== '0') return false;
+    const baseMode = baseModes.get(entry.path);
+    return baseMode !== undefined && baseMode !== entry.mode;
+  });
+  if (!stagedModeChanges.length) return;
+
+  const finalEntries = new Map(
+    (await readIndexEntries(repositoryPath, environment)).map((entry) => [
+      entry.path,
+      entry,
+    ]),
+  );
+  for (const stagedEntry of stagedModeChanges) {
+    const finalEntry = finalEntries.get(stagedEntry.path);
+    if (!finalEntry || finalEntry.mode === stagedEntry.mode) continue;
+    await runGit(
+      repositoryPath,
+      [
+        'update-index',
+        '--add',
+        '--cacheinfo',
+        stagedEntry.mode,
+        finalEntry.object,
+        finalEntry.path,
+      ],
+      environment,
+    );
+  }
+}
+
+async function readIndexEntries(
+  repositoryPath: string,
+  environment?: Readonly<Record<string, string | undefined>>,
+): Promise<IndexEntry[]> {
+  return parseIndexEntries(
+    await runGit(repositoryPath, ['ls-files', '--stage', '-z'], environment),
+  );
+}
+
+function parseIndexEntries(output: string): IndexEntry[] {
+  return output
+    .split('\0')
+    .filter(Boolean)
+    .flatMap((token) => {
+      const tab = token.indexOf('\t');
+      if (tab < 0) return [];
+      const header = token.slice(0, tab).split(' ');
+      const path = token.slice(tab + 1);
+      const mode = header[0];
+      const object = header[1];
+      const stage = header[2];
+      if (!mode || !object || !stage || !path) return [];
+      return [{ mode, object, stage, path: normalizeRepoPath(path) }];
+    });
+}
+
+async function readTreeEntries(
+  repositoryPath: string,
+  baseCommit: string,
+): Promise<Array<[string, string]>> {
+  return (await runGit(repositoryPath, ['ls-tree', '-r', '-z', baseCommit]))
+    .split('\0')
+    .filter(Boolean)
+    .flatMap((token) => {
+      const tab = token.indexOf('\t');
+      if (tab < 0) return [];
+      const header = token.slice(0, tab).split(' ');
+      const mode = header[0];
+      const path = token.slice(tab + 1);
+      if (!mode || !path) return [];
+      return [[normalizeRepoPath(path), mode]] as Array<[string, string]>;
+    });
 }
 
 function isUnmergedState(state: ChangeState | undefined): boolean {
