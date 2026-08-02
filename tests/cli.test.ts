@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { runCli } from '../src/cli.js';
+import { captureFinalTree } from '../src/git/snapshot.js';
 
 const builtCli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 const temporaryPaths: string[] = [];
@@ -54,6 +56,7 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('specport spec bundle');
     expect(result.stdout).toContain('specport spec lock');
     expect(result.stdout).toContain('specport spec drift');
+    expect(result.stdout).toContain('specport spec guard');
     expect(result.stdout).toContain('specport spec validate');
     expect(result.stdout).toContain('specport pull');
     expect(result.stdout).toContain('--receipt <file>');
@@ -356,6 +359,241 @@ describe('SpecPort CLI contract', () => {
     const invalid = await invoke(['spec', 'validate', contractPath, '--json']);
     expect(invalid.code).toBe(5);
     expect(parseJson(invalid).valid).toBe(false);
+  });
+
+  it('emits a merge-ready guard only from identity-bound evidence', async () => {
+    const repository = await createRepository();
+    const specPath = join(repository, 'SPEC.md');
+    const contractPath = join(repository, '.specport', 'contract.json');
+    const evidenceRoot = join(repository, '.specport', 'evidence');
+    const scopePath = join(tmpdir(), 'specport-approved-scope.json');
+    temporaryPaths.push(scopePath);
+    const acceptancePath = join(evidenceRoot, 'contract-acceptance.json');
+    const verificationPath = join(evidenceRoot, 'verification.json');
+    const tastePath = join(evidenceRoot, 'taste.json');
+    const lockPath = join(repository, 'SPEC.lock');
+    await mkdir(evidenceRoot, { recursive: true });
+    await writeFile(
+      specPath,
+      [
+        '# Fixture product spec',
+        '',
+        'Status: accepted',
+        'Source: fixture owner decision',
+        '',
+        '## Intent',
+        'The maintainer needs a bounded change.',
+        '',
+        '## Workflow',
+        'The user reviews the changed behavior.',
+        '',
+        '## Acceptance',
+        'AC-001: Given valid input, when reviewed, then the result is correct.',
+        '',
+        '## Verification',
+        'Check: `npm test`',
+        '',
+        '## Taste and human review',
+        'Reviewer: maintainer',
+        'Rubric: clear and reversible.',
+        '',
+        '## Release',
+        'Release target and artifact: fixture package. Compatibility: Node 20+. Rollback: previous commit.',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    await writeFile(join(repository, '.gitignore'), '.specport/\n', 'utf8');
+    await runGit(repository, ['add', 'SPEC.md', '.gitignore']);
+    await runGit(repository, [
+      'commit',
+      '--quiet',
+      '-m',
+      'accepted fixture contract',
+    ]);
+    const contract = {
+      contractVersion: '1',
+      kind: 'product-contract',
+      id: 'fixture-guard',
+      title: 'Guard fixture',
+      provenance: { source: 'fixture', license: 'MIT', owner: 'owner' },
+      intent: {
+        owner: 'owner',
+        userJob: 'review a change',
+        outcome: 'bounded result',
+        nonGoals: [],
+      },
+      constraints: [],
+      acceptance: [
+        { id: 'AC-1', statement: 'works', evidence: ['verification'] },
+      ],
+      verification: [
+        { id: 'V-1', command: 'npm test', purpose: 'regression' },
+        { id: 'V-2', command: 'npm run lint', purpose: 'static checks' },
+      ],
+      taste: { required: true, reviewer: 'owner', rubric: ['clear'] },
+      release: {
+        target: 'fixture',
+        version: '1.0.0',
+        compatibility: 'Node 20+',
+        security: 'No secrets',
+        observability: 'Failures are visible',
+        shipAuthority: 'owner',
+        readiness: ['verified'],
+        rollback: ['previous commit'],
+      },
+    };
+    const contractBytes = JSON.stringify(contract, null, 2);
+    await writeFile(contractPath, contractBytes, 'utf8');
+    await writeFile(
+      join(repository, 'src', 'base.ts'),
+      'export const base = false;\n',
+      'utf8',
+    );
+    const contractSha256 = createHash('sha256')
+      .update(contractBytes)
+      .digest('hex');
+    await writeFile(
+      acceptancePath,
+      JSON.stringify({
+        decision: 'accepted',
+        acceptedBy: 'fixture owner',
+        acceptedAt: '2026-08-02T20:00:00.000Z',
+        contractPath,
+        contractSha256,
+        decisionSource: 'fixture review',
+      }),
+      'utf8',
+    );
+    const locked = await invoke([
+      'spec',
+      'lock',
+      specPath,
+      '--out',
+      lockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T20:02:00.000Z',
+    ]);
+    expect(locked.code).toBe(0);
+    const actual = await captureFinalTree(repository);
+    await writeFile(
+      scopePath,
+      JSON.stringify({
+        identity: 'approved-fixture-change',
+        repositoryId: actual.repositoryId,
+        baseCommit: actual.baseCommit,
+        paths: actual.entries.map((entry) => entry.path),
+      }),
+      'utf8',
+    );
+    const verificationEvidence = {
+      artifactKind: 'specport-verification-evidence',
+      status: 'passed',
+      repositoryId: actual.repositoryId,
+      baseCommit: actual.baseCommit,
+      finalTreeFingerprint: actual.fingerprint,
+      contractSha256,
+      checks: [
+        {
+          id: 'V-1',
+          command: 'npm test',
+          status: 'passed',
+          exitCode: 0,
+        },
+        {
+          id: 'V-2',
+          command: 'npm run lint',
+          status: 'passed',
+          exitCode: 0,
+        },
+      ],
+    };
+    await writeFile(
+      verificationPath,
+      JSON.stringify(verificationEvidence),
+      'utf8',
+    );
+    await writeFile(
+      tastePath,
+      JSON.stringify({
+        artifactKind: 'specport-taste-review',
+        status: 'passed',
+        reviewer: 'fixture owner',
+        reviewedAt: '2026-08-02T20:01:00.000Z',
+        repositoryId: actual.repositoryId,
+        baseCommit: actual.baseCommit,
+        finalTreeFingerprint: actual.fingerprint,
+        contractSha256,
+        rubric: ['clear'],
+        evidence: ['reviewed the changed path'],
+      }),
+      'utf8',
+    );
+
+    const guardArgs = [
+      'spec',
+      'guard',
+      repository,
+      '--spec',
+      specPath,
+      '--contract',
+      contractPath,
+      '--acceptance-record',
+      acceptancePath,
+      '--verification',
+      verificationPath,
+      '--taste',
+      tastePath,
+      '--lock',
+      lockPath,
+      '--expected-scope',
+      scopePath,
+      '--json',
+    ];
+    const guarded = await invoke(guardArgs);
+    const receipt = parseJson(guarded);
+    if (guarded.code !== 0)
+      throw new Error(`Expected merge-ready guard:\n${guarded.stdout}`);
+    expect(guarded.code).toBe(0);
+    expect(receipt.artifactKind).toBe('spec-guard');
+    expect(receipt.status).toBe('pass');
+    expect(receipt.verdict).toBe('merge-ready');
+    expect(record(receipt.safety).codeExecuted).toBe(false);
+    expect(record(receipt.humanReview).release).toBe('not-run');
+    expect(
+      (receipt.gates as Array<Record<string, unknown>>).every(
+        (gate) => gate.status === 'pass',
+      ),
+    ).toBe(true);
+
+    await writeFile(
+      verificationPath,
+      JSON.stringify({
+        ...verificationEvidence,
+        checks: verificationEvidence.checks.slice(0, 1),
+      }),
+      'utf8',
+    );
+    const missingCheck = await invoke(guardArgs);
+    expect(missingCheck.code).toBe(5);
+    expect(record(parseJson(missingCheck).inputs).verification).toEqual(
+      expect.objectContaining({ status: 'invalid' }),
+    );
+    await writeFile(
+      verificationPath,
+      JSON.stringify(verificationEvidence),
+      'utf8',
+    );
+
+    await writeFile(
+      join(repository, 'src', 'base.ts'),
+      'export const base = true;\n',
+      'utf8',
+    );
+    const stale = await invoke(guardArgs);
+    expect(stale.code).toBe(5);
+    expect(parseJson(stale).status).toBe('hold');
   });
 
   it('creates a draft and checks an accepted spec through the short aliases', async () => {

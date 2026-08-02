@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "<specport-version>",
+  "artifactKind": "specport-verification-evidence",
+  "status": "passed",
+  "repositoryId": "<canonical-repository-id>",
+  "baseCommit": "<full-base-commit>",
+  "finalTreeFingerprint": "<final-tree-fingerprint>",
+  "contractSha256": "<contract-sha256>",
+  "checks": [
+    {
+      "id": "V-001",
+      "command": "<exact-command-run>",
+      "purpose": "<what-this-check proves>",
+      "status": "passed",
+      "exitCode": 0,
+      "environment": "<runtime and platform>",
+      "output": "<path-to-captured-output-or-log>"
+    }
+  ]
+}

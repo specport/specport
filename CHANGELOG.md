@@ -11,6 +11,12 @@ exact npm artifact and clean-consumer smoke test pass.
   hashes, and explicit no-code/no-network safety boundaries.
 - Added `spec lock` and `spec drift` for local reproducibility fingerprints and
   fail-closed detection of changed specs, supporting artifacts, or source trees.
+- Added `spec guard`, an evidence-first merge guard that binds final-tree
+  coverage, accepted contracts, contract acceptance, verification, taste, and
+  candidate-lock identity into a machine-readable receipt without executing
+  repository code or granting ship authority.
+- Added identity-bound verification and taste evidence templates for the
+  production skill.
 - Added a copyable human taste-review template to the production skill so
   maturity evidence covers the real product medium, not only automated checks.
 - Added deterministic final-tree coverage with receiver and expected-scope

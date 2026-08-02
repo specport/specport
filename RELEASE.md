@@ -17,9 +17,10 @@ npm pack --dry-run --json --ignore-scripts
 
 The package gate typechecks, lints, builds, runs tests, packs the publish
 surface, installs the exact tarball in a clean consumer, runs the installed
-CLI, validates the example contract, lists the packaged skills, and exports a
-skill. Record the commit, version, checksum, Node/npm versions, and command
-outputs. Do not publish a dirty tree or an artifact built from another commit.
+CLI, validates the example contract, exercises the identity-bound `spec guard`
+receipt, lists the packaged skills, and exports a skill. Record the commit,
+version, checksum, Node/npm versions, and command outputs. Do not publish a
+dirty tree or an artifact built from another commit.
 
 ## npm authority and publication
 

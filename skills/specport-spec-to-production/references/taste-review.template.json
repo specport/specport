@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "<specport-version>",
+  "artifactKind": "specport-taste-review",
+  "status": "passed",
+  "reviewer": "<named-human-reviewer>",
+  "reviewedAt": "<ISO-8601-timestamp>",
+  "repositoryId": "<canonical-repository-id>",
+  "baseCommit": "<full-base-commit>",
+  "finalTreeFingerprint": "<final-tree-fingerprint>",
+  "contractSha256": "<contract-sha256>",
+  "rubric": [
+    "<product-specific quality question>"
+  ],
+  "evidence": [
+    "<path, screenshot, recording, listening note, walkthrough, or operational exercise>"
+  ],
+  "notes": "<what was experienced, what changed, and any residual risk>"
+}

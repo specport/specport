@@ -233,6 +233,38 @@ artifact inputs returns the run to G2 and invalidates G3 onward. Record `G5 PASS
 only when the required rubric is complete and the human decision is
 acceptance (or an explicitly authorized exception with residual risk).
 
+### Merge guard: bind the evidence to one candidate
+
+Once the accepted contract, acceptance record, verification evidence, taste
+record, and candidate `SPEC.lock` exist, compose the machine guard receipt:
+
+```text
+specport spec guard . \
+  --spec SPEC.md \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/evidence/contract-acceptance.json \
+  --verification .specport/evidence/verification.json \
+  --taste .specport/evidence/taste.json \
+  --lock SPEC.lock \
+  --expected-scope .specport/evidence/approved-scope.json \
+  --write .specport/evidence/guard.json \
+  --json
+```
+
+The receiver form is equivalent when a pinned review is the approval object:
+`--receiver githuman --review <review-id>` can replace `--expected-scope`.
+The scope or receiver is mandatory; an inventory-only scan can never become a
+merge-ready result. Verification and taste records must carry the repository
+identity, base commit, final-tree fingerprint, and contract digest. Use
+`references/verification-evidence.template.json` and
+`references/taste-review.template.json` as starting shapes.
+
+`spec guard` does not execute repository code, run a check, approve a product,
+or publish/deploy anything. Exit `0` with `verdict: merge-ready` means the
+exact candidate is covered and its supplied evidence is identity-bound; it
+still requires the separate release, rollback, and human ship decisions. Exit
+`5` is a hold for missing, stale, mismatched, or failed evidence.
+
 ### G6. Release artifact and install/launch smoke
 
 Build the artifact from the exact G4/G5 candidate. Do not use an artifact made
@@ -375,6 +407,12 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
 - `specport coverage ... [--json]` compares the final Git-visible tree with an
   explicit receiver or expected scope; it does not run tests or provide taste
   approval.
+- `specport spec guard [path] --spec SPEC.md --contract FILE
+  --acceptance-record FILE --verification FILE --lock SPEC.lock` composes a
+  fail-closed, identity-bound merge guard. Supply `--taste FILE` when the
+  contract requires taste review and either `--expected-scope FILE` or a
+  pinned GitHuman receiver. It consumes evidence and does not execute project
+  code or grant ship authority.
 - `specport spec discover` observes a repository baseline; it does not infer
   product intent or acceptance.
 - `specport spec bundle` composes the repository baseline, bounded map,
@@ -407,7 +445,8 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   a `contractSha256` matching the exact contract bytes. The command does not
   execute repository code, run checks, perform taste review, or approve release.
 
-The top-level aliases `specport cover`, `specport remix`, and `specport build`
-are retained for convenience, but the `spec` namespace is canonical. Use the
+The top-level aliases `specport cover`, `specport remix`, `specport build`, and
+`specport guard` are retained for convenience, but the `spec` namespace is
+canonical. Use the
 host agent's bounded coding tools for implementation and the commands above for
 the evidence surfaces they actually provide.

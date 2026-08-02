@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/spec-guard.schema.json",
+  "title": "SpecPort guard receipt",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "status",
+    "verdict",
+    "generatedAt",
+    "repository",
+    "comparison",
+    "inputs",
+    "gates",
+    "verification",
+    "humanReview",
+    "safety",
+    "decision",
+    "nextActions"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "artifactKind": { "const": "spec-guard" },
+    "status": { "enum": ["hold", "pass"] },
+    "verdict": { "enum": ["review-required", "merge-ready"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "repository": {
+      "type": "object",
+      "required": [
+        "path",
+        "id",
+        "headCommit",
+        "baseCommit",
+        "baseKind",
+        "finalTreeFingerprint",
+        "stable",
+        "changedPathCount"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "headCommit": { "type": ["string", "null"] },
+        "baseCommit": { "type": ["string", "null"] },
+        "baseKind": { "enum": ["commit", "empty-tree", "not-a-git-repository"] },
+        "finalTreeFingerprint": { "type": "string", "minLength": 1 },
+        "stable": { "type": "boolean" },
+        "changedPathCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "comparison": {
+      "type": "object",
+      "required": [
+        "basis",
+        "coverage",
+        "actualPaths",
+        "reviewedPaths",
+        "expectedPaths",
+        "unreviewedPaths",
+        "unexpectedPaths",
+        "changedAfterReviewPaths",
+        "identityGap",
+        "findings"
+      ],
+      "properties": {
+        "basis": { "enum": ["receiver-source", "approved-scope", "unavailable"] },
+        "coverage": { "enum": ["complete", "partial", "unknown"] },
+        "actualPaths": { "type": "array", "items": { "type": "string" } },
+        "reviewedPaths": { "type": "array", "items": { "type": "string" } },
+        "expectedPaths": { "type": "array", "items": { "type": "string" } },
+        "unreviewedPaths": { "type": "array", "items": { "type": "string" } },
+        "unexpectedPaths": { "type": "array", "items": { "type": "string" } },
+        "changedAfterReviewPaths": { "type": "array", "items": { "type": "string" } },
+        "identityGap": { "type": "array", "items": { "type": "string" } },
+        "findings": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["spec", "contract", "lock", "acceptance", "verification", "taste"],
+      "properties": {
+        "spec": {
+          "type": "object",
+          "required": ["path", "readiness", "accepted", "issueCount"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "readiness": { "enum": ["ready", "draft", "invalid"] },
+            "accepted": { "type": "boolean" },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "contract": {
+          "type": "object",
+          "required": ["path", "valid", "issueCount"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "valid": { "type": "boolean" },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "lock": {
+          "type": "object",
+          "required": ["path", "status", "issueCount"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "status": { "enum": ["clean", "drifted", "unknown"] },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "acceptance": {
+          "type": "object",
+          "required": ["path", "status", "actor", "issueCount"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "status": { "enum": ["accepted", "invalid", "missing"] },
+            "actor": { "type": ["string", "null"] },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "verification": {
+          "type": "object",
+          "required": ["path", "status", "checkCount", "issueCount"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "status": { "enum": ["passed", "invalid", "missing"] },
+            "checkCount": { "type": "integer", "minimum": 0 },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "taste": {
+          "type": "object",
+          "required": ["path", "status", "reviewer", "issueCount"],
+          "properties": {
+            "path": { "type": ["string", "null"] },
+            "status": { "enum": ["passed", "not-required", "invalid", "missing"] },
+            "reviewer": { "type": ["string", "null"] },
+            "issueCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "evidence", "nextAction"],
+        "properties": {
+          "id": { "enum": ["tree", "coverage", "spec", "contract", "acceptance", "verification", "taste", "drift"] },
+          "status": { "enum": ["pass", "blocked", "not-run"] },
+          "evidence": { "type": "string", "minLength": 1 },
+          "nextAction": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status", "discoveredChecks", "checkCount"],
+      "properties": {
+        "status": { "enum": ["evidence-provided", "blocked"] },
+        "discoveredChecks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "command"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "command": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "checkCount": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "humanReview": {
+      "type": "object",
+      "required": ["taste", "release", "shipAuthority"],
+      "properties": {
+        "taste": { "enum": ["evidence-provided", "not-required", "blocked"] },
+        "release": { "const": "not-run" },
+        "shipAuthority": { "const": "human-required" }
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["codeExecuted", "networkAccessed"],
+      "properties": {
+        "codeExecuted": { "const": false },
+        "networkAccessed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["state", "shipDecision", "note"],
+      "properties": {
+        "state": { "enum": ["hold", "merge-ready"] },
+        "shipDecision": { "const": "human-required" },
+        "note": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "nextActions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

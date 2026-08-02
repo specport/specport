@@ -699,7 +699,7 @@ async function inspectContract(path: string): Promise<ContractEvidence> {
   };
 }
 
-async function inspectAcceptanceRecord(
+export async function inspectAcceptanceRecord(
   path: string | undefined,
   contractPath: string,
   contractDigest: string | null,

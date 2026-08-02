@@ -171,6 +171,37 @@ The lock is reproducibility evidence, not human acceptance, test proof, taste
 approval, or ship authority. Both commands are local and execute no project
 code or network requests.
 
+## Guard one candidate before merge
+
+After implementation, bind the final tree to the accepted contract and the
+evidence that a human or bounded agent actually produced:
+
+```bash
+specport spec guard . \
+  --spec SPEC.md \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/evidence/contract-acceptance.json \
+  --verification .specport/evidence/verification.json \
+  --taste .specport/evidence/taste.json \
+  --lock SPEC.lock \
+  --expected-scope .specport/evidence/approved-scope.json \
+  --write .specport/evidence/guard.json \
+  --json
+```
+
+Use `--receiver githuman --review <review-id>` instead of
+`--expected-scope` when a pinned local review is the approval object. The
+command requires an explicit comparison basis; an inventory-only scan cannot
+become merge-ready. Verification and taste evidence must identify the exact
+repository, base commit, final-tree fingerprint, and contract digest. The
+packaged production skill includes JSON templates for both records.
+
+`verdict: merge-ready` means the candidate is covered and the supplied
+evidence is identity-bound. It is not a ship approval: the guard does not run
+repository code, publish, deploy, or replace release, rollback, and human
+ship-authority gates. Missing, stale, mismatched, or failed evidence returns
+exit code `5` and a hold receipt.
+
 Map the repository into a bounded implementation map without executing its
 code:
 
@@ -289,12 +320,17 @@ overwrite tracked repository files or write `.specport/contracts/`.
 order, handoff state, and discovered checks before asking bounded questions. It
 never executes a declared check; a selected check is recorded as `not-run`.
 
+Guard receipts are written as `artifactKind: spec-guard`. They distinguish a
+`merge-ready` candidate from a shipped product: verification and taste are
+consumed as identity-bound evidence, while release, rollback, and human ship
+authority remain separate. The guard itself executes no project code.
+
 | Code | Meaning |
 | ---: | --- |
 | 0 | Diagnostic completed or exact coverage is complete |
 | 2 | Usage, Git, or input error |
 | 4 | Requested output could not be written |
-| 5 | Coverage, contract, spec, or lifecycle gates require review |
+| 5 | Coverage, contract, spec, lifecycle, or guard gates require review |
 | 7 | Requested receiver is unavailable or could not consume a finding |
 
 ## What SpecPort is not

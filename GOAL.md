@@ -181,6 +181,7 @@ The target command surface is:
 | specport spec bundle <repo> | Generate the draft SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest in one read-only pass |
 | specport spec lock <spec> | Record SPEC.md, supporting artifact, repository, and source-tree fingerprints in SPEC.lock |
 | specport spec drift <spec> | Compare the current local state with SPEC.lock and fail closed on drift or unknown state |
+| specport spec guard <repo> | Bind an exact final tree to scope, accepted contract, verification, taste, acceptance, and candidate-lock evidence before merge; it does not ship |
 | specport spec validate <contract> | Validate a human-owned product contract before implementation |
 | specport create <input> | Turn arbitrary text into a draft spec |
 | specport check <spec> | Check structure, completeness, provenance, and readiness |
@@ -261,6 +262,15 @@ npx --yes @specport/specport@latest spec bundle .
 specport spec lock SPEC.md --out SPEC.lock
 specport spec drift SPEC.md --lock SPEC.lock --json
 
+specport spec guard . \
+  --spec SPEC.md \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/evidence/contract-acceptance.json \
+  --verification .specport/evidence/verification.json \
+  --lock SPEC.lock \
+  --expected-scope .specport/evidence/approved-scope.json \
+  --json
+
 specport spec validate .specport/contract.json
 
 specport create notes.md --out SPEC.md
@@ -338,7 +348,7 @@ cover/remix, discovery, and code generation as the expansion path that this
 trust layer can earn, not as proof of present adoption.
 
 The create, check, discover, bundle, validate, pull, map, skill list, skill
-export, lock, drift, and bounded lifecycle artifact commands are implemented
+export, lock, drift, guard, and bounded lifecycle artifact commands are implemented
 and tested in the current foundation. Bundle writes a complete draft-only repo-to-spec
 packet with output hashes and refuses to replace an accepted SPEC.md. Map is a
 bounded static/token scan, not a full language AST or runtime behavior proof.
@@ -364,6 +374,11 @@ The current codebase is already an early spec foundation:
   identity, and source-tree basis needed to reproduce a handoff;
 - spec drift compares the locked files and source-tree basis, returning a
   nonzero hold signal for changed or unresolvable state;
+- spec guard requires an explicit receiver or approved scope, then binds the
+  final tree to an accepted spec, contract acceptance, verification evidence,
+  taste evidence when required, and a clean candidate lock. It returns a
+  merge-ready receipt without executing repository code or granting ship
+  authority;
 - spec validate validates a human-owned product contract with intent,
   acceptance, verification, taste, release, and path-boundary fields;
 - spec create preserves arbitrary text as a provenance-bearing draft, and spec
@@ -445,6 +460,11 @@ Each phase must be demonstrated with a real fixture and a readable artifact:
   change/deviation record; any verification that did not run remains labeled;
 - an AI skill can perform the workflow in a bounded test repository and return
   structured results without silently expanding scope;
+- a candidate fixture with an approved scope, accepted contract, durable
+  acceptance record, passing identity-bound verification and taste evidence,
+  and clean `SPEC.lock` produces a `spec guard` receipt with
+  `verdict: merge-ready`; any changed identity or missing evidence returns
+  exit `5` and never executes repository code;
 - the exact npm package installs in a clean consumer and supports both human
   output and stable machine-readable output, including native skill listing and
   export;

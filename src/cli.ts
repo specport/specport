@@ -40,6 +40,7 @@ import {
   renderSpecDraftMarkdown,
 } from './spec/authoring.js';
 import { readAndValidateProductContract } from './spec/contract.js';
+import { createGuardReceipt, renderGuardReceiptHuman } from './spec/guard.js';
 import {
   createBuildHandoff,
   createCoverPlan,
@@ -88,6 +89,7 @@ interface Options {
     | 'spec-bundle'
     | 'spec-lock'
     | 'spec-drift'
+    | 'spec-guard'
     | 'spec-cover'
     | 'spec-remix'
     | 'spec-build'
@@ -115,6 +117,9 @@ interface Options {
   targetStack?: string;
   provenancePath?: string;
   acceptanceRecordPath?: string;
+  specPath?: string;
+  verificationPath?: string;
+  tastePath?: string;
   changes?: string[];
   reason?: string;
 }
@@ -211,6 +216,88 @@ export async function runCli(
       );
       await writeSpecDriftArtifact(options, report, stdout);
       return report.status === 'clean' ? 0 : 5;
+    }
+    if (options.command === 'spec-guard') {
+      const actual = await captureFinalTree(options.path, options.baseRef);
+      const expectedScope = options.expectedScopePath
+        ? await readExpectedScope(options.expectedScopePath, actual)
+        : undefined;
+      let coverage = compareCoverage({
+        actual,
+        ...(expectedScope ? { expectedScope } : {}),
+      });
+      let networkAccessed = false;
+      if (options.receiver) {
+        if (options.receiver !== 'githuman') {
+          throw new UsageError(
+            `Unsupported receiver: ${options.receiver}. v0.1 supports githuman.`,
+          );
+        }
+        networkAccessed = true;
+        try {
+          const adapter = new GitHumanAdapter(
+            options.receiverUrl ? { baseUrl: options.receiverUrl } : {},
+          );
+          const source = (await adapter.getReview(actual, options.reviewId))
+            .source;
+          coverage = compareCoverage({
+            actual,
+            receiver: source,
+            ...(expectedScope ? { expectedScope } : {}),
+          });
+        } catch (error) {
+          coverage = {
+            ...coverage,
+            coverage: 'unknown',
+            status: 'unknown',
+            identityGap: [
+              ...coverage.identityGap,
+              error instanceof Error ? error.message : 'receiver-unavailable',
+            ],
+            findings: [],
+          };
+        }
+      }
+      const specPath = resolveRepositoryInput(
+        actual.repositoryPath,
+        options.specPath,
+      );
+      const contractPath = resolveRepositoryInput(
+        actual.repositoryPath,
+        options.contractPath,
+      );
+      const lockPath = resolveRepositoryInput(
+        actual.repositoryPath,
+        options.lockPath,
+      );
+      const acceptancePath = resolveRepositoryInput(
+        actual.repositoryPath,
+        options.acceptanceRecordPath,
+      );
+      const verificationPath = resolveRepositoryInput(
+        actual.repositoryPath,
+        options.verificationPath,
+      );
+      const tastePath = options.tastePath
+        ? resolveRepositoryInput(actual.repositoryPath, options.tastePath)
+        : undefined;
+      const receipt = await createGuardReceipt({
+        actual,
+        coverage,
+        specPath,
+        contractPath,
+        lockPath,
+        acceptancePath,
+        verificationPath,
+        ...(tastePath ? { tastePath } : {}),
+        discoveredChecks: await discoverChecks(actual.repositoryPath),
+        networkAccessed,
+        recapture: () =>
+          captureFinalTree(actual.repositoryPath, options.baseRef),
+        ...(options.generatedAt ? { generatedAt: options.generatedAt } : {}),
+      });
+      await writeGuardArtifact(options, receipt, stdout);
+      return receipt.status === 'pass' ? 0 : 5;
     }
     if (options.command === 'spec-cover') {
       if (!options.targetPath)
@@ -486,6 +573,7 @@ function parseArgs(argv: readonly string[]): Options {
     rawCommand === 'bundle' ||
     rawCommand === 'lock' ||
     rawCommand === 'drift' ||
+    rawCommand === 'guard' ||
     rawCommand === 'cover' ||
     rawCommand === 'remix' ||
     rawCommand === 'build'
@@ -618,6 +706,7 @@ function parseSpecArgs(args: string[]): Options {
     if (positional[0]) options.path = positional[0];
     return options;
   }
+  if (subcommand === 'guard') return parseGuardArgs(args);
   if (subcommand === 'lock' || subcommand === 'drift')
     return parseLockArgs(subcommand, args);
   if (
@@ -731,7 +820,7 @@ function parseSpecArgs(args: string[]): Options {
     return options;
   }
   throw new UsageError(
-    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec bundle [path]`, `spec lock [SPEC.md]`, `spec drift [SPEC.md]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec bundle [path]`, `spec lock [SPEC.md]`, `spec drift [SPEC.md]`, `spec guard [path]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
   );
 }
 
@@ -781,6 +870,99 @@ function parseLockArgs(subcommand: 'lock' | 'drift', args: string[]): Options {
       `spec ${subcommand} accepts at most one SPEC.md path.`,
     );
   if (positional[0]) options.path = positional[0];
+  return options;
+}
+
+function parseGuardArgs(args: string[]): Options {
+  const options: Options = {
+    ...baseOptions('spec-guard'),
+    path: '.',
+    json: false,
+    force: false,
+    interactive: false,
+  };
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    switch (arg) {
+      case '--json':
+        options.json = true;
+        break;
+      case '--force':
+        options.force = true;
+        break;
+      case '--out':
+      case '--write':
+        options.writePath = requiredValue(args, ++index, arg);
+        break;
+      case '--spec':
+        options.specPath = requiredValue(args, ++index, arg);
+        break;
+      case '--contract':
+        options.contractPath = requiredValue(args, ++index, arg);
+        break;
+      case '--lock':
+        options.lockPath = requiredValue(args, ++index, arg);
+        break;
+      case '--acceptance-record':
+      case '--acceptance':
+        options.acceptanceRecordPath = requiredValue(args, ++index, arg);
+        break;
+      case '--verification':
+        options.verificationPath = requiredValue(args, ++index, arg);
+        break;
+      case '--taste':
+        options.tastePath = requiredValue(args, ++index, arg);
+        break;
+      case '--expected-scope':
+        options.expectedScopePath = requiredValue(args, ++index, arg);
+        break;
+      case '--receiver':
+        options.receiver = requiredValue(args, ++index, arg);
+        break;
+      case '--review':
+      case '--receiver-review':
+        options.reviewId = requiredValue(args, ++index, arg);
+        break;
+      case '--receiver-url':
+        options.receiverUrl = requiredValue(args, ++index, arg);
+        break;
+      case '--base':
+        options.baseRef = requiredValue(args, ++index, arg);
+        break;
+      case '--generated-at':
+        options.generatedAt = normalizedGeneratedAt(
+          requiredValue(args, ++index, arg),
+        );
+        break;
+      case '--help':
+      case '-h':
+        throw new UsageError(helpText());
+      default:
+        if (arg.startsWith('-')) throw new UsageError(`Unknown option: ${arg}`);
+        positional.push(arg);
+    }
+  }
+  if (positional.length > 1)
+    throw new UsageError('spec guard accepts at most one repository path.');
+  if (positional[0]) options.path = positional[0];
+  if (!options.specPath)
+    throw new UsageError('spec guard requires --spec <SPEC.md>.');
+  if (!options.contractPath)
+    throw new UsageError('spec guard requires --contract <contract.json>.');
+  if (!options.lockPath)
+    throw new UsageError('spec guard requires --lock <SPEC.lock>.');
+  if (!options.acceptanceRecordPath)
+    throw new UsageError(
+      'spec guard requires --acceptance-record <record.json>.',
+    );
+  if (!options.verificationPath)
+    throw new UsageError('spec guard requires --verification <evidence.json>.');
+  if (!options.expectedScopePath && !options.receiver)
+    throw new UsageError(
+      'spec guard requires --expected-scope <file> or --receiver githuman.',
+    );
   return options;
 }
 
@@ -1049,6 +1231,15 @@ async function readExpectedScope(
       : {}),
     paths: normalizePathList(paths),
   };
+}
+
+function resolveRepositoryInput(
+  repositoryRoot: string,
+  path: string | undefined,
+): string {
+  if (!path)
+    throw new UsageError('A repository-relative input path is required.');
+  return isAbsolute(path) ? path : resolve(repositoryRoot, path);
 }
 
 function receiverDetails(
@@ -1695,6 +1886,31 @@ async function writeSpecDriftArtifact(
     stdout.write(`WROTE      ${resolve(options.writePath)}\n`);
 }
 
+async function writeGuardArtifact(
+  options: Options,
+  receipt: Awaited<ReturnType<typeof createGuardReceipt>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(receipt, null, 2)}\n`;
+  let outputPath: string | undefined;
+  if (options.writePath) {
+    outputPath = isAbsolute(options.writePath)
+      ? options.writePath
+      : resolve(options.path, options.writePath);
+    await writeSpecOutput(
+      outputPath,
+      options.json ? json : renderGuardReceiptHuman(receipt),
+      options.force,
+    );
+  }
+  if (options.json) {
+    stdout.write(json);
+    return;
+  }
+  stdout.write(renderGuardReceiptHuman(receipt));
+  if (outputPath) stdout.write(`WROTE      ${outputPath}\n`);
+}
+
 async function writeSpecOutput(
   target: string,
   content: string,
@@ -2295,6 +2511,7 @@ Usage:
   specport spec bundle [path] [--out DIRECTORY] [--json] [--force] [--generated-at ISO-8601]
   specport spec lock [SPEC.md] [--out SPEC.lock] [--json] [--force] [--generated-at ISO-8601]
   specport spec drift [SPEC.md] [--lock SPEC.lock] [--out REPORT] [--json] [--generated-at ISO-8601]
+  specport spec guard [path] --spec SPEC.md --contract FILE --acceptance-record FILE --verification FILE --lock SPEC.lock [--taste FILE] (--expected-scope FILE | --receiver githuman) [--out REPORT] [--json] [--force]
   specport spec cover <SPEC.md> --target <repo> --target-stack <stack> [--contract FILE] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec remix <SPEC.md> --change <statement> [--change <statement> ...] [--reason TEXT] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec build <SPEC.md> --target <repo> --target-stack <stack> --contract FILE --acceptance-record FILE [--provenance RECEIPT] [--out FILE] [--json] [--force]
@@ -2307,6 +2524,7 @@ Usage:
   specport bundle [path] ...    (top-level alias for spec bundle)
   specport lock [SPEC.md] ...   (top-level alias for spec lock)
   specport drift [SPEC.md] ...  (top-level alias for spec drift)
+  specport guard [path] ...      (top-level alias for spec guard)
   specport cover <SPEC.md> ...  (top-level alias for spec cover)
   specport remix <SPEC.md> ...  (top-level alias for spec remix)
   specport build <SPEC.md> ...  (top-level alias for spec build)
@@ -2320,6 +2538,7 @@ Spec workflows:
   spec bundle     write a complete repo-to-spec packet for an AI/human handoff
   spec lock       record SPEC.md, contract, map, baseline, and source-tree fingerprints
   spec drift      compare the current local state with SPEC.lock; exit 5 on drift or unknown state
+  spec guard      prove a final tree is merge-ready against scope, contract, acceptance, verification, taste, and lock evidence; it does not ship
   spec cover      prepare a provenance- and contract-gated target implementation plan
   spec remix      create a lineage-preserving draft with an explicit change set
   spec build      create a human-gated implementation handoff; it does not generate code

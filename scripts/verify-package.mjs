@@ -96,6 +96,12 @@ try {
       'utf8',
     ),
   );
+  const guardSchema = JSON.parse(
+    await readFile(
+      join(installedRoot, 'schemas', 'spec-guard.schema.json'),
+      'utf8',
+    ),
+  );
   const lifecycleAjv = new Ajv({ allErrors: true, strict: false });
   addFormats(lifecycleAjv);
   const validateLifecycle = lifecycleAjv.compile(lifecycleSchema);
@@ -103,6 +109,7 @@ try {
   const validateLedger = lifecycleAjv.compile(ledgerSchema);
   const validateLock = lifecycleAjv.compile(lockSchema);
   const validateDrift = lifecycleAjv.compile(driftSchema);
+  const validateGuard = lifecycleAjv.compile(guardSchema);
   const version = (
     await run(node, [installedCli, '--version'], consumer)
   ).stdout.trim();
@@ -508,6 +515,173 @@ try {
     'installed blocked cover',
   );
 
+  const guardRoot = join(consumer, 'guard-fixture');
+  const guardSpecPath = join(guardRoot, 'SPEC.md');
+  const guardContractPath = join(guardRoot, '.specport', 'contract.json');
+  const guardEvidenceRoot = join(guardRoot, '.specport', 'evidence');
+  const guardAcceptancePath = join(
+    guardEvidenceRoot,
+    'contract-acceptance.json',
+  );
+  const guardVerificationPath = join(guardEvidenceRoot, 'verification.json');
+  const guardTastePath = join(guardEvidenceRoot, 'taste.json');
+  const guardLockPath = join(guardRoot, 'SPEC.lock');
+  const guardMarkerPath = join(guardRoot, 'guard-marker.txt');
+  await mkdir(join(guardRoot, 'src'), { recursive: true });
+  await mkdir(guardEvidenceRoot, { recursive: true });
+  await writeFile(join(guardRoot, '.gitignore'), '.specport/\n');
+  await writeFile(guardSpecPath, fixtureSpec);
+  await writeFile(
+    join(guardRoot, 'package.json'),
+    JSON.stringify({
+      name: 'guard-fixture',
+      scripts: {
+        test: `node -e "require('fs').writeFileSync(${JSON.stringify(guardMarkerPath)}, 'ran')"`,
+      },
+    }),
+  );
+  await writeFile(
+    join(guardRoot, 'src', 'index.js'),
+    'export function guardFixture() { return true; }\n',
+  );
+  await writeFile(guardContractPath, fixtureContractBytes);
+  await run('git', ['init', '--quiet'], guardRoot);
+  await run('git', ['config', 'user.name', 'SpecPort Package Smoke'], guardRoot);
+  await run(
+    'git',
+    ['config', 'user.email', 'specport-package@example.invalid'],
+    guardRoot,
+  );
+  await run('git', ['add', '--all'], guardRoot);
+  await run('git', ['commit', '--quiet', '-m', 'guard baseline'], guardRoot);
+  await writeFile(
+    join(guardRoot, 'src', 'index.js'),
+    'export function guardFixture() { return false; }\n',
+  );
+  const guardContractSha256 = createHash('sha256')
+    .update(fixtureContractBytes)
+    .digest('hex');
+  await writeFile(
+    guardAcceptancePath,
+    JSON.stringify({
+      decision: 'accepted',
+      acceptedBy: 'package smoke owner',
+      acceptedAt: '2026-01-01T00:00:00.000Z',
+      contractPath: guardContractPath,
+      contractSha256: guardContractSha256,
+      decisionSource: 'package smoke acceptance',
+    }),
+  );
+  await run(
+    node,
+    [
+      installedCli,
+      'spec',
+      'lock',
+      guardSpecPath,
+      '--out',
+      guardLockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:03:00.000Z',
+    ],
+    consumer,
+  );
+  const guardCoverage = JSON.parse(
+    (
+      await run(node, [installedCli, 'coverage', guardRoot, '--json'], consumer)
+    ).stdout,
+  );
+  const guardComparison = guardCoverage.comparison;
+  const guardScopePath = join(tempRoot, 'guard-approved-scope.json');
+  await writeFile(
+    guardScopePath,
+    JSON.stringify({
+      identity: 'package-smoke-approved-change',
+      repositoryId: guardComparison.repositoryId,
+      baseCommit: guardComparison.baseCommit,
+      paths: guardCoverage.paths.actual,
+    }),
+  );
+  await writeFile(
+    guardVerificationPath,
+    JSON.stringify({
+      artifactKind: 'specport-verification-evidence',
+      status: 'passed',
+      repositoryId: guardComparison.repositoryId,
+      baseCommit: guardComparison.baseCommit,
+      finalTreeFingerprint: guardComparison.finalTreeFingerprint,
+      contractSha256: guardContractSha256,
+      checks: [
+        {
+          id: 'V-001',
+          command: 'npm test',
+          status: 'passed',
+          exitCode: 0,
+        },
+      ],
+    }),
+  );
+  await writeFile(
+    guardTastePath,
+    JSON.stringify({
+      artifactKind: 'specport-taste-review',
+      status: 'passed',
+      reviewer: 'package smoke owner',
+      reviewedAt: '2026-01-01T00:01:00.000Z',
+      repositoryId: guardComparison.repositoryId,
+      baseCommit: guardComparison.baseCommit,
+      finalTreeFingerprint: guardComparison.finalTreeFingerprint,
+      contractSha256: guardContractSha256,
+      rubric: ['clear'],
+      evidence: ['reviewed the fixture change'],
+    }),
+  );
+  const guard = JSON.parse(
+    (
+      await run(
+        node,
+        [
+          installedCli,
+          'spec',
+          'guard',
+          guardRoot,
+          '--spec',
+          guardSpecPath,
+          '--contract',
+          guardContractPath,
+          '--acceptance-record',
+          guardAcceptancePath,
+          '--verification',
+          guardVerificationPath,
+          '--taste',
+          guardTastePath,
+          '--lock',
+          guardLockPath,
+          '--expected-scope',
+          guardScopePath,
+          '--json',
+        ],
+        consumer,
+      )
+    ).stdout,
+  );
+  if (
+    guard.artifactKind !== 'spec-guard' ||
+    guard.status !== 'pass' ||
+    guard.verdict !== 'merge-ready' ||
+    guard.safety?.codeExecuted !== false
+  ) {
+    throw new Error('Installed guard did not produce a safe merge-ready receipt.');
+  }
+  assertSchema(validateGuard, guard, 'installed guard receipt', 'spec-guard.schema.json');
+  try {
+    await access(guardMarkerPath);
+    throw new Error('Installed guard unexpectedly executed a repository check.');
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('unexpectedly')) throw error;
+  }
+
   const skillList = JSON.parse(
     (await run(node, [installedCli, 'skill', 'list', '--json'], consumer))
       .stdout,
@@ -578,6 +752,10 @@ try {
     productionExport.artifactKind !== 'skill-export' ||
     !productionExport.files.includes('references/gate-ledger.template.md') ||
     !productionExport.files.includes('references/taste-review.template.md') ||
+    !productionExport.files.includes(
+      'references/verification-evidence.template.json',
+    ) ||
+    !productionExport.files.includes('references/taste-review.template.json') ||
     !productionExport.files.includes('references/ship-receipt.template.md') ||
     !productionExport.files.includes(
       'references/contract-acceptance-record.template.json',
@@ -587,6 +765,12 @@ try {
   }
   await access(join(productionTarget, 'references', 'gate-ledger.template.md'));
   await access(join(productionTarget, 'references', 'taste-review.template.md'));
+  await access(
+    join(productionTarget, 'references', 'verification-evidence.template.json'),
+  );
+  await access(
+    join(productionTarget, 'references', 'taste-review.template.json'),
+  );
   await access(
     join(
       productionTarget,
@@ -608,6 +792,7 @@ try {
   );
   await access(join(installedRoot, 'schemas', 'spec-lock.schema.json'));
   await access(join(installedRoot, 'schemas', 'spec-drift.schema.json'));
+  await access(join(installedRoot, 'schemas', 'spec-guard.schema.json'));
   const validation = JSON.parse(
     (
       await run(
