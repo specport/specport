@@ -6,9 +6,18 @@ import {
   mkdir,
   readdir,
   readFile,
+  realpath,
   writeFile,
 } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   compareCoverage,
@@ -1551,7 +1560,12 @@ async function assertDisposableWriteTarget(
       ? comparison.repositoryPath
       : undefined;
   if (!repositoryPath) return;
-  const repoRelative = relative(repositoryPath, target).replaceAll(sep, '/');
+  const canonicalRepositoryPath = await canonicalPath(repositoryPath);
+  const canonicalTarget = await canonicalPath(target);
+  const repoRelative = relative(
+    canonicalRepositoryPath,
+    canonicalTarget,
+  ).replaceAll(sep, '/');
   if (
     !repoRelative ||
     repoRelative === '..' ||
@@ -1569,7 +1583,7 @@ async function assertDisposableWriteTarget(
       'Quick coverage must not write .specport/contracts; use a disposable evidence path.',
     );
   }
-  const tracked = await tryRunGit(repositoryPath, [
+  const tracked = await tryRunGit(canonicalRepositoryPath, [
     'ls-files',
     '--error-unmatch',
     '--',
@@ -1579,6 +1593,17 @@ async function assertDisposableWriteTarget(
     throw new OutputError(
       `Refusing to overwrite tracked repository file ${repoRelative}; choose a disposable evidence path.`,
     );
+  }
+}
+
+async function canonicalPath(path: string): Promise<string> {
+  const absolute = resolve(path);
+  try {
+    return await realpath(absolute);
+  } catch {
+    const parent = dirname(absolute);
+    if (parent === absolute) return absolute;
+    return join(await canonicalPath(parent), basename(absolute));
   }
 }
 
