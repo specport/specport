@@ -97,6 +97,20 @@ The command refuses to overwrite an existing output by default. Use `--out
 `.specport/` artifacts already exist; use `--force` only for an unaccepted
 generated draft. An accepted `SPEC.md` is protected even with `--force`.
 
+After the packet is in its intended location, record and check its
+reproducibility boundary:
+
+```text
+specport spec lock SPEC.md --out SPEC.lock
+specport spec drift SPEC.md --lock SPEC.lock --json
+```
+
+`SPEC.lock` records the spec, contract, baseline, map, repository identity,
+and source-tree fingerprints. A clean drift result means those observed
+inputs match the lock; it does not mean the spec is accepted or that product
+behavior is correct. Exit `5` is a hold signal for changed or unknown state.
+The commands are local and do not execute repository code.
+
 Do not pass `--force` by default. If `SPEC.md` or an evidence file already
 exists, preserve the human-owned artifact and either ask before replacing it
 or use clearly named drafts such as `SPEC.generated.md` and
@@ -211,6 +225,10 @@ Return the exact paths and status of:
 - `.specport/repo-to-spec/spec-check.json`;
 - `.specport/repo-to-spec/packet.json` with output hashes and the draft-only
   handoff status;
+- `SPEC.lock` with the spec, supporting artifact, repository, and source-tree
+  fingerprints;
+- a clean `spec drift` report for the exact packet handed off, or an explicit
+  blocked/unknown report explaining why it could not be clean;
 - `.specport/contract.json` and its validation result only when the owner has
   accepted the contract;
 - an `Unknowns` section and a short `Next actions` section in `SPEC.md`.

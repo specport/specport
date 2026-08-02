@@ -155,6 +155,22 @@ network, preserves observed/inferred/unknown labels, and refuses to overwrite
 an existing output unless `--force` is supplied. An accepted `SPEC.md` is
 protected even with `--force`.
 
+Create a reproducibility record after the draft or contract artifacts are in
+their intended location, then check it before implementation or review:
+
+```bash
+specport spec lock SPEC.md --out SPEC.lock
+specport spec drift SPEC.md --lock SPEC.lock --json
+```
+
+`SPEC.lock` records the spec digest and readiness, the repository identity and
+authoritative tree basis, and the observed contract, baseline, and map
+digests. `spec drift` compares those files and the current local Git-visible
+tree; it exits `0` for a match and `5` for drift or an unknown comparison.
+The lock is reproducibility evidence, not human acceptance, test proof, taste
+approval, or ship authority. Both commands are local and execute no project
+code or network requests.
+
 Map the repository into a bounded implementation map without executing its
 code:
 

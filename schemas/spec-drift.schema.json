@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/spec-drift.schema.json",
+  "title": "SpecPort SPEC.lock drift report",
+  "description": "A deterministic comparison between SPEC.lock and the current local repository state.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "status",
+    "generatedAt",
+    "lockPath",
+    "repository",
+    "checks",
+    "issues",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "artifactKind": { "const": "spec-drift" },
+    "status": {
+      "type": "string",
+      "enum": ["clean", "drifted", "unknown"]
+    },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "lockPath": { "type": "string", "minLength": 1 },
+    "repository": {
+      "type": "object",
+      "required": ["root", "repositoryId", "finalTreeFingerprint"],
+      "properties": {
+        "root": { "type": ["string", "null"] },
+        "repositoryId": { "type": ["string", "null"] },
+        "finalTreeFingerprint": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" }
+    },
+    "issues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/issue" }
+    },
+    "safety": {
+      "type": "object",
+      "required": ["codeExecuted", "networkAccessed"],
+      "properties": {
+        "codeExecuted": { "const": false },
+        "networkAccessed": { "const": false }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["name", "status", "path", "expected", "actual"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["spec", "contract", "baseline", "map", "repository"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["match", "changed", "missing", "not-recorded", "unknown"]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "expected": { "type": ["string", "null"] },
+        "actual": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "issue": {
+      "type": "object",
+      "required": ["code", "check", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "lock-invalid",
+            "file-changed",
+            "file-missing",
+            "file-appeared",
+            "repository-changed",
+            "repository-unavailable"
+          ]
+        },
+        "check": {
+          "type": "string",
+          "enum": ["spec", "contract", "baseline", "map", "repository"]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["drifted", "unknown"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

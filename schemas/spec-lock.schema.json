@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/spec-lock.schema.json",
+  "title": "SpecPort SPEC.lock",
+  "description": "A reproducibility record for a human-owned SPEC.md and its observed repository artifacts.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "status",
+    "generatedAt",
+    "tool",
+    "spec",
+    "repository",
+    "artifacts",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "artifactKind": { "const": "spec-lock" },
+    "status": { "const": "draft" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "@specport/specport" },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "$ref": "#/$defs/spec-file"
+    },
+    "repository": {
+      "type": "object",
+      "required": [
+        "root",
+        "repositoryId",
+        "headCommit",
+        "baseCommit",
+        "baseKind",
+        "finalTreeFingerprint",
+        "stable",
+        "ignoredPaths"
+      ],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "repositoryId": { "type": ["string", "null"] },
+        "headCommit": { "type": ["string", "null"] },
+        "baseCommit": { "type": ["string", "null"] },
+        "baseKind": {
+          "type": "string",
+          "enum": ["commit", "empty-tree", "not-a-git-repository"]
+        },
+        "finalTreeFingerprint": { "type": ["string", "null"] },
+        "stable": { "type": ["boolean", "null"] },
+        "ignoredPaths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["contract", "baseline", "map"],
+      "properties": {
+        "contract": { "$ref": "#/$defs/file" },
+        "baseline": { "$ref": "#/$defs/file" },
+        "map": { "$ref": "#/$defs/file" }
+      },
+      "additionalProperties": false
+    },
+    "safety": {
+      "type": "object",
+      "required": ["codeExecuted", "networkAccessed"],
+      "properties": {
+        "codeExecuted": { "const": false },
+        "networkAccessed": { "const": false }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "required": ["path", "present", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "present": { "type": "boolean" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec-file": {
+      "type": "object",
+      "required": [
+        "path",
+        "present",
+        "bytes",
+        "sha256",
+        "readiness",
+        "accepted"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "present": { "type": "boolean" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "readiness": {
+          "type": "string",
+          "enum": ["ready", "draft", "invalid"]
+        },
+        "accepted": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

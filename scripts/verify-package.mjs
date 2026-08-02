@@ -87,11 +87,22 @@ try {
       'utf8',
     ),
   );
+  const lockSchema = JSON.parse(
+    await readFile(join(installedRoot, 'schemas', 'spec-lock.schema.json'), 'utf8'),
+  );
+  const driftSchema = JSON.parse(
+    await readFile(
+      join(installedRoot, 'schemas', 'spec-drift.schema.json'),
+      'utf8',
+    ),
+  );
   const lifecycleAjv = new Ajv({ allErrors: true, strict: false });
   addFormats(lifecycleAjv);
   const validateLifecycle = lifecycleAjv.compile(lifecycleSchema);
   const validatePacket = lifecycleAjv.compile(packetSchema);
   const validateLedger = lifecycleAjv.compile(ledgerSchema);
+  const validateLock = lifecycleAjv.compile(lockSchema);
+  const validateDrift = lifecycleAjv.compile(driftSchema);
   const version = (
     await run(node, [installedCli, '--version'], consumer)
   ).stdout.trim();
@@ -194,6 +205,88 @@ try {
     packetLedger,
     'installed repo-to-spec ledger',
     'repo-to-spec-evidence-ledger.schema.json',
+  );
+  const lockPath = join(packetRoot, 'SPEC.lock');
+  const lockResult = await run(
+    node,
+    [
+      installedCli,
+      'spec',
+      'lock',
+      join(packetRoot, 'SPEC.md'),
+      '--out',
+      lockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:01:00.000Z',
+    ],
+    consumer,
+  );
+  const lock = JSON.parse(lockResult.stdout);
+  if (
+    lock.artifactKind !== 'spec-lock' ||
+    lock.safety?.codeExecuted !== false ||
+    lock.safety?.networkAccessed !== false
+  ) {
+    throw new Error('Installed SPEC.lock command crossed its safety boundary.');
+  }
+  assertSchema(validateLock, lock, 'installed SPEC.lock', 'spec-lock.schema.json');
+  await access(lockPath);
+  const cleanDrift = await run(
+    node,
+    [
+      installedCli,
+      'spec',
+      'drift',
+      join(packetRoot, 'SPEC.md'),
+      '--lock',
+      lockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:02:00.000Z',
+    ],
+    consumer,
+  );
+  const cleanDriftArtifact = JSON.parse(cleanDrift.stdout);
+  if (cleanDriftArtifact.status !== 'clean') {
+    throw new Error('Installed SPEC.lock drift check was not clean immediately after creation.');
+  }
+  assertSchema(
+    validateDrift,
+    cleanDriftArtifact,
+    'installed clean SPEC.lock drift report',
+    'spec-drift.schema.json',
+  );
+  await writeFile(
+    join(packetRoot, 'SPEC.md'),
+    `${await readFile(join(packetRoot, 'SPEC.md'), 'utf8')}\nChanged after lock.\n`,
+    'utf8',
+  );
+  const changedDrift = await runAllowFailure(
+    node,
+    [
+      installedCli,
+      'spec',
+      'drift',
+      join(packetRoot, 'SPEC.md'),
+      '--lock',
+      lockPath,
+      '--json',
+    ],
+    consumer,
+  );
+  if (changedDrift.code !== 5) {
+    throw new Error(`Installed changed SPEC.lock drift returned ${changedDrift.code}, expected 5.`);
+  }
+  const changedDriftArtifact = JSON.parse(changedDrift.stdout);
+  if (changedDriftArtifact.status !== 'drifted') {
+    throw new Error('Installed SPEC.lock drift check did not report changed source.');
+  }
+  assertSchema(
+    validateDrift,
+    changedDriftArtifact,
+    'installed changed SPEC.lock drift report',
+    'spec-drift.schema.json',
   );
   const remix = JSON.parse(
     (
@@ -513,6 +606,8 @@ try {
   await access(
     join(installedRoot, 'schemas', 'repo-to-spec-evidence-ledger.schema.json'),
   );
+  await access(join(installedRoot, 'schemas', 'spec-lock.schema.json'));
+  await access(join(installedRoot, 'schemas', 'spec-drift.schema.json'));
   const validation = JSON.parse(
     (
       await run(

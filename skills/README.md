@@ -10,7 +10,9 @@ reproducible behavior matters.
 - `specport-repo-to-spec/SKILL.md` observes a repository and produces a
   grounded, human-reviewable contract draft. Start with
   `specport spec bundle .` to write the draft, bounded map, evidence ledger,
-  and structural handoff in one read-only pass.
+  and structural handoff in one read-only pass. Then write `SPEC.lock` with
+  `specport spec lock SPEC.md` and run `specport spec drift SPEC.md` before
+  handing the packet to another agent.
 - `specport-spec-to-production/SKILL.md` executes an accepted contract through
   ordered implementation, verification, final-tree coverage, taste review,
   release-artifact and rollback gates, and an evidence-backed ship receipt.

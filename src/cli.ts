@@ -46,6 +46,12 @@ import {
   createRemixArtifact,
   renderLifecycleMarkdown,
 } from './spec/lifecycle.js';
+import {
+  checkSpecDrift,
+  createSpecLock,
+  DEFAULT_SPEC_LOCK_PATH,
+  renderSpecDriftHuman,
+} from './spec/lock.js';
 import { mapRepository, renderRepositoryMapMarkdown } from './spec/map.js';
 import {
   createRepoToSpecPacket,
@@ -80,6 +86,8 @@ interface Options {
     | 'spec-discover'
     | 'spec-map'
     | 'spec-bundle'
+    | 'spec-lock'
+    | 'spec-drift'
     | 'spec-cover'
     | 'spec-remix'
     | 'spec-build'
@@ -100,6 +108,7 @@ interface Options {
   contractPath?: string;
   skillName?: string;
   generatedAt?: string;
+  lockPath?: string;
   source?: string;
   receiptPath?: string;
   targetPath?: string;
@@ -176,6 +185,32 @@ export async function runCli(
       );
       await writeRepoToSpecPacket(options, packet, stdout);
       return packet.packet.specCheck.readiness === 'ready' ? 0 : 5;
+    }
+    if (options.command === 'spec-lock') {
+      const specPath = resolve(options.path);
+      const lockPath = options.writePath
+        ? resolve(options.writePath)
+        : resolve(dirname(specPath), DEFAULT_SPEC_LOCK_PATH);
+      const lock = await createSpecLock(
+        specPath,
+        lockPath,
+        options.generatedAt,
+      );
+      await writeSpecLockArtifact(options, lock, lockPath, stdout);
+      return 0;
+    }
+    if (options.command === 'spec-drift') {
+      const specPath = resolve(options.path);
+      const lockPath = options.lockPath
+        ? resolve(options.lockPath)
+        : resolve(dirname(specPath), DEFAULT_SPEC_LOCK_PATH);
+      const report = await checkSpecDrift(
+        specPath,
+        lockPath,
+        options.generatedAt,
+      );
+      await writeSpecDriftArtifact(options, report, stdout);
+      return report.status === 'clean' ? 0 : 5;
     }
     if (options.command === 'spec-cover') {
       if (!options.targetPath)
@@ -449,6 +484,8 @@ function parseArgs(argv: readonly string[]): Options {
     rawCommand === 'check' ||
     rawCommand === 'map' ||
     rawCommand === 'bundle' ||
+    rawCommand === 'lock' ||
+    rawCommand === 'drift' ||
     rawCommand === 'cover' ||
     rawCommand === 'remix' ||
     rawCommand === 'build'
@@ -581,6 +618,8 @@ function parseSpecArgs(args: string[]): Options {
     if (positional[0]) options.path = positional[0];
     return options;
   }
+  if (subcommand === 'lock' || subcommand === 'drift')
+    return parseLockArgs(subcommand, args);
   if (
     subcommand === 'cover' ||
     subcommand === 'remix' ||
@@ -692,8 +731,57 @@ function parseSpecArgs(args: string[]): Options {
     return options;
   }
   throw new UsageError(
-    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec bundle [path]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec bundle [path]`, `spec lock [SPEC.md]`, `spec drift [SPEC.md]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
   );
+}
+
+function parseLockArgs(subcommand: 'lock' | 'drift', args: string[]): Options {
+  const options: Options = {
+    ...baseOptions(subcommand === 'lock' ? 'spec-lock' : 'spec-drift'),
+    path: 'SPEC.md',
+    json: false,
+    force: false,
+    interactive: false,
+  };
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    switch (arg) {
+      case '--json':
+        options.json = true;
+        break;
+      case '--force':
+        options.force = true;
+        break;
+      case '--out':
+      case '--write':
+        options.writePath = requiredValue(args, ++index, arg);
+        break;
+      case '--lock':
+        if (subcommand !== 'drift')
+          throw new UsageError('--lock is only available for spec drift.');
+        options.lockPath = requiredValue(args, ++index, arg);
+        break;
+      case '--generated-at':
+        options.generatedAt = normalizedGeneratedAt(
+          requiredValue(args, ++index, arg),
+        );
+        break;
+      case '--help':
+      case '-h':
+        throw new UsageError(helpText());
+      default:
+        if (arg.startsWith('-')) throw new UsageError(`Unknown option: ${arg}`);
+        positional.push(arg);
+    }
+  }
+  if (positional.length > 1)
+    throw new UsageError(
+      `spec ${subcommand} accepts at most one SPEC.md path.`,
+    );
+  if (positional[0]) options.path = positional[0];
+  return options;
 }
 
 function parseLifecycleArgs(
@@ -1558,6 +1646,55 @@ async function writeSpecCheckArtifact(
   if (!options.json && wroteTarget) stdout.write(`WROTE      ${wroteTarget}\n`);
 }
 
+async function writeSpecLockArtifact(
+  options: Options,
+  lock: Awaited<ReturnType<typeof createSpecLock>>,
+  target: string,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(lock, null, 2)}\n`;
+  await writeSpecOutput(target, json, options.force);
+  if (options.json) {
+    stdout.write(json);
+    return;
+  }
+  stdout.write(
+    [
+      'LOCK       written',
+      `TARGET     ${target}`,
+      `SPEC       ${lock.spec.path} (${lock.spec.readiness})`,
+      `REPOSITORY ${lock.repository.root}`,
+      `TREE       ${lock.repository.finalTreeFingerprint ?? 'not recorded'}`,
+      'EXECUTION  none',
+      'NETWORK    not accessed',
+      '',
+    ].join('\n'),
+  );
+}
+
+async function writeSpecDriftArtifact(
+  options: Options,
+  report: Awaited<ReturnType<typeof checkSpecDrift>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(report, null, 2)}\n`;
+  if (options.writePath) {
+    const target = resolve(options.writePath);
+    const content =
+      options.json || !target.toLowerCase().endsWith('.md')
+        ? json
+        : renderSpecDriftHuman(report);
+    await writeSpecOutput(target, content, options.force);
+  }
+  if (options.json) {
+    stdout.write(json);
+    return;
+  }
+  stdout.write(renderSpecDriftHuman(report));
+  if (options.writePath)
+    stdout.write(`WROTE      ${resolve(options.writePath)}\n`);
+}
+
 async function writeSpecOutput(
   target: string,
   content: string,
@@ -2156,6 +2293,8 @@ Usage:
   specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec map [path] [--out MAP.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec bundle [path] [--out DIRECTORY] [--json] [--force] [--generated-at ISO-8601]
+  specport spec lock [SPEC.md] [--out SPEC.lock] [--json] [--force] [--generated-at ISO-8601]
+  specport spec drift [SPEC.md] [--lock SPEC.lock] [--out REPORT] [--json] [--generated-at ISO-8601]
   specport spec cover <SPEC.md> --target <repo> --target-stack <stack> [--contract FILE] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec remix <SPEC.md> --change <statement> [--change <statement> ...] [--reason TEXT] [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec build <SPEC.md> --target <repo> --target-stack <stack> --contract FILE --acceptance-record FILE [--provenance RECEIPT] [--out FILE] [--json] [--force]
@@ -2166,6 +2305,8 @@ Usage:
   specport check <SPEC.md> ... (alias)
   specport map [path] ...       (top-level alias for spec map)
   specport bundle [path] ...    (top-level alias for spec bundle)
+  specport lock [SPEC.md] ...   (top-level alias for spec lock)
+  specport drift [SPEC.md] ...  (top-level alias for spec drift)
   specport cover <SPEC.md> ...  (top-level alias for spec cover)
   specport remix <SPEC.md> ...  (top-level alias for spec remix)
   specport build <SPEC.md> ...  (top-level alias for spec build)
@@ -2177,6 +2318,8 @@ Spec workflows:
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec map        generate a bounded static repository map with explicit unknowns
   spec bundle     write a complete repo-to-spec packet for an AI/human handoff
+  spec lock       record SPEC.md, contract, map, baseline, and source-tree fingerprints
+  spec drift      compare the current local state with SPEC.lock; exit 5 on drift or unknown state
   spec cover      prepare a provenance- and contract-gated target implementation plan
   spec remix      create a lineage-preserving draft with an explicit change set
   spec build      create a human-gated implementation handoff; it does not generate code

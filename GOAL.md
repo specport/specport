@@ -179,6 +179,8 @@ The target command surface is:
 | specport coverage <repo> | Compare the final Git-visible tree with a receiver or expected scope |
 | specport spec discover <repo> | Generate an observed repository-baseline draft |
 | specport spec bundle <repo> | Generate the draft SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest in one read-only pass |
+| specport spec lock <spec> | Record SPEC.md, supporting artifact, repository, and source-tree fingerprints in SPEC.lock |
+| specport spec drift <spec> | Compare the current local state with SPEC.lock and fail closed on drift or unknown state |
 | specport spec validate <contract> | Validate a human-owned product contract before implementation |
 | specport create <input> | Turn arbitrary text into a draft spec |
 | specport check <spec> | Check structure, completeness, provenance, and readiness |
@@ -256,6 +258,9 @@ npx --yes @specport/specport@latest spec bundle .
 
 # Writes SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest.
 # Exit 5 is expected until the human contract is filled and accepted.
+specport spec lock SPEC.md --out SPEC.lock
+specport spec drift SPEC.md --lock SPEC.lock --json
+
 specport spec validate .specport/contract.json
 
 specport create notes.md --out SPEC.md
@@ -289,8 +294,8 @@ specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to
 ~~~
 
 The create, check, discover, bundle, validate, pull, map, skill list, skill
-export, and bounded lifecycle artifact commands are implemented and tested in
-the current foundation. Bundle writes a complete draft-only repo-to-spec
+export, lock, drift, and bounded lifecycle artifact commands are implemented
+and tested in the current foundation. Bundle writes a complete draft-only repo-to-spec
 packet with output hashes and refuses to replace an accepted SPEC.md. Map is a
 bounded static/token scan, not a full language AST or runtime behavior proof.
 Pull covers one exact GitHub file at a resolved commit and records a content
@@ -311,6 +316,10 @@ The current codebase is already an early spec foundation:
   files, package metadata, Git state, README headings, and detected checks;
 - spec bundle composes discovery, bounded mapping, structural checking, and
   evidence-ledger generation into one draft-only repo-to-spec packet;
+- spec lock records the exact spec, supporting artifact digests, repository
+  identity, and source-tree basis needed to reproduce a handoff;
+- spec drift compares the locked files and source-tree basis, returning a
+  nonzero hold signal for changed or unresolvable state;
 - spec validate validates a human-owned product contract with intent,
   acceptance, verification, taste, release, and path-boundary fields;
 - spec create preserves arbitrary text as a provenance-bearing draft, and spec

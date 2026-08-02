@@ -52,6 +52,8 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('specport skill export');
     expect(result.stdout).toContain('specport spec discover');
     expect(result.stdout).toContain('specport spec bundle');
+    expect(result.stdout).toContain('specport spec lock');
+    expect(result.stdout).toContain('specport spec drift');
     expect(result.stdout).toContain('specport spec validate');
     expect(result.stdout).toContain('specport pull');
     expect(result.stdout).toContain('--receipt <file>');
@@ -218,6 +220,84 @@ describe('SpecPort CLI contract', () => {
     expect(result.stderr).toContain('accepted SPEC.md');
     expect(await readFile(join(outputRoot, 'SPEC.md'), 'utf8')).toContain(
       'Status: accepted',
+    );
+  });
+
+  it('creates a reproducibility lock and detects source drift', async () => {
+    const repository = await createRepository();
+    const specPath = join(repository, 'SPEC.md');
+    const lockPath = join(repository, 'SPEC.lock');
+    await writeFile(
+      specPath,
+      '# Fixture specification\n\nStatus: draft\n',
+      'utf8',
+    );
+
+    const locked = await invoke([
+      'spec',
+      'lock',
+      specPath,
+      '--out',
+      lockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:35:00.000Z',
+    ]);
+    const lock = parseJson(locked);
+
+    expect(locked.code).toBe(0);
+    expect(lock.artifactKind).toBe('spec-lock');
+    expect(record(lock.safety).codeExecuted).toBe(false);
+    expect(record(lock.safety).networkAccessed).toBe(false);
+    expect(record(lock.spec).sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(await readFile(lockPath, 'utf8')).toContain('spec-lock');
+
+    const clean = await invoke([
+      'spec',
+      'drift',
+      specPath,
+      '--lock',
+      lockPath,
+      '--json',
+      '--generated-at',
+      '2026-08-02T19:36:00.000Z',
+    ]);
+    expect(clean.code).toBe(0);
+    expect(parseJson(clean).status).toBe('clean');
+
+    await runGit(repository, ['add', 'SPEC.lock']);
+    await runGit(repository, ['commit', '--quiet', '-m', 'record spec lock']);
+    const cleanAfterCommit = await invoke([
+      'spec',
+      'drift',
+      specPath,
+      '--lock',
+      lockPath,
+      '--json',
+    ]);
+    expect(cleanAfterCommit.code).toBe(0);
+    expect(parseJson(cleanAfterCommit).status).toBe('clean');
+
+    await writeFile(
+      specPath,
+      '# Fixture specification\n\nStatus: draft\n\nChanged.\n',
+      'utf8',
+    );
+    const drifted = await invoke([
+      'spec',
+      'drift',
+      specPath,
+      '--lock',
+      lockPath,
+      '--json',
+    ]);
+    const report = parseJson(drifted);
+    expect(drifted.code).toBe(5);
+    expect(report.status).toBe('drifted');
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'file-changed', check: 'spec' }),
+      ]),
     );
   });
 

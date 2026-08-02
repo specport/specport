@@ -381,6 +381,11 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   draft-only `SPEC.md`, evidence ledger, structural check, and packet manifest
   in one read-only pass; exit `5` is expected until the human contract is
   accepted.
+- `specport spec lock SPEC.md --out SPEC.lock` records the spec and supporting
+  artifact fingerprints for a reproducible handoff. `specport spec drift
+  SPEC.md --lock SPEC.lock --json` is a useful pre-implementation and
+  pre-receipt hold gate; `clean` means the inputs match, not that they are
+  accepted, tested, tasteful, secure, or shippable.
 - `specport spec map [path] [--json]` creates a read-only bounded static map of
   files, simple symbols, local imports, and explicit surfaces. Inferred edges
   and all scan limits/unknowns remain labeled; it does not prove runtime

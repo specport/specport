@@ -9,6 +9,8 @@ exact npm artifact and clean-consumer smoke test pass.
 - Added `spec bundle`, a draft-only one-command repository-to-spec packet with
   a grounded `SPEC.md`, bounded map, evidence ledger, structural check, output
   hashes, and explicit no-code/no-network safety boundaries.
+- Added `spec lock` and `spec drift` for local reproducibility fingerprints and
+  fail-closed detection of changed specs, supporting artifacts, or source trees.
 - Added a copyable human taste-review template to the production skill so
   maturity evidence covers the real product medium, not only automated checks.
 - Added deterministic final-tree coverage with receiver and expected-scope
