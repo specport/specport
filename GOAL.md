@@ -21,6 +21,12 @@ recipe or blueprint: instead of buying a separate SaaS product for every
 workflow, a user can find a useful, licensed spec, cover or remix it for their
 context, and build it with the tools and AI they choose.
 
+The near-term wedge is narrower and must earn the ecosystem's trust first:
+after an AI agent finishes, prove that the exact final Git-visible tree is
+covered by the review source or approved scope. This is the first repeatable
+reason to install SpecPort; the portable-spec network is a larger direction,
+not evidence of current adoption.
+
 That is a direction, not a claim that every generated implementation is safe,
 correct, or production-ready. SpecPort must preserve provenance, licensing,
 unknowns, verification evidence, and human ownership of the final ship
@@ -176,10 +182,10 @@ The target command surface is:
 | specport create <input> | Turn arbitrary text into a draft spec |
 | specport check <spec> | Check structure, completeness, provenance, and readiness |
 | specport pull <github-ref> | Discover and fetch a spec at an exact ref |
-| specport map <repo> | Generate a bounded static repository map with evidence labels and explicit unknowns |
-| specport cover <spec> | Implement a spec for a target repo or stack |
-| specport remix <spec> | Fork/adapt a spec while preserving lineage |
-| specport build <spec> | Run or hand off a bounded implementation workflow |
+| specport spec map <repo> | Generate a bounded static repository map with evidence labels and explicit unknowns |
+| specport spec cover <spec> --target <repo> --target-stack <stack> | Create a lineage, license, contract, and target-compatibility plan; it does not generate code |
+| specport spec remix <spec> --change <statement> | Create a parent-preserving remix draft with an explicit change set and attribution obligations |
+| specport spec build <spec> --target <repo> --target-stack <stack> --contract <contract.json> --acceptance-record <record.json> | Produce a human-gated implementation handoff; it does not execute or ship the build |
 | specport skill list/export | List or export native AI operating instructions |
 | specport search <query> | Search local or future public spec indexes |
 
@@ -251,8 +257,15 @@ specport spec validate .specport/contract.json
 specport create notes.md --out SPEC.md
 specport check SPEC.md
 
-# Target implementation handoff once the build phase lands:
-specport build SPEC.md --target .
+# Create a bounded implementation handoff. It requires a human-accepted contract
+# and a receipt-verified declared source license before it can be ready:
+specport spec build SPEC.md \
+  --target . \
+  --target-stack node \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/contract-acceptance.json \
+  --provenance .specport/pulls/source.receipt.json \
+  --json
 ~~~
 
 For an existing project, the parallel entry point is:
@@ -268,12 +281,16 @@ specport skill list
 specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
-The create, check, discover, validate, pull, map, skill list, and skill export
-commands are implemented and tested in the current foundation. Map is a
-bounded static/token scan, not a full language AST or runtime behavior proof.
-Pull currently covers one exact GitHub file at a resolved commit with license
-and provenance evidence; manifest-based discovery, full AST-specific mapping,
-cover, remix, build, search, and public discovery remain roadmap work.
+The create, check, discover, validate, pull, map, skill list, skill export, and
+bounded lifecycle artifact commands are implemented and tested in the current
+foundation. Map is a bounded static/token scan, not a full language AST or
+runtime behavior proof. Pull covers one exact GitHub file at a resolved commit
+and records a content digest, license, and provenance evidence. Cover produces
+a ready-or-blocked plan, remix produces a draft with preserved parent identity,
+and build produces a ready-or-blocked handoff; none of these commands generate
+code, run repository checks, perform taste review, or make a ship decision.
+Manifest-based discovery, full AST-specific mapping, code-generating target
+adapters, search, and public discovery remain roadmap work.
 
 ## Phased roadmap
 
@@ -290,6 +307,12 @@ The current codebase is already an early spec foundation:
   free of unresolved decisions;
 - spec map produces a deterministic bounded static map of file roles, symbols,
   local import edges, package/HTTP/CLI surfaces, safety limits, and unknowns;
+- spec cover produces a lineage-aware target plan and fails closed when source
+  license, contract, or target evidence is not sufficient;
+- spec remix produces a parent-preserving draft with an explicit change set,
+  attribution requirement, and human re-acceptance boundary;
+- spec build produces a machine-readable implementation handoff whose execution
+  flags prove that SpecPort itself generated no code and ran no target code;
 - the repository includes native skills for repository-to-spec and
   spec-to-production workflows;
 - skill list/export exposes those packaged playbooks to a host agent without
@@ -299,12 +322,12 @@ The current codebase is already an early spec foundation:
 
 These are valuable foundations and evidence adapters, but they are not yet the
 full product described here. The current code does not yet provide
-manifest-based discovery, full language AST mapping, lineage-aware
-cover/remix, a general build engine, public discovery, or ratings.
+manifest-based discovery, full language AST mapping, code-generating target
+adapters or a general build executor, public discovery, or ratings.
 
-Keep current commands and artifacts honest. Do not describe unbuilt lifecycle
-commands as if they already ship, and do not let the coverage adapter become
-the definition of SpecPort.
+Keep current commands and artifacts honest. Do not describe a lifecycle plan or
+handoff as generated software, a passing check, taste approval, or a release.
+Do not let the coverage adapter become the definition of SpecPort.
 
 ### Phase 1: unify the foundational spec format
 
@@ -353,8 +376,8 @@ Each phase must be demonstrated with a real fixture and a readable artifact:
   exact ref, and reported with license and provenance;
 - a repository fixture produces an AST/evidence draft that separates observed,
   inferred, and unknown statements;
-- a cover or remix preserves parent identity, license, lineage, deviations,
-  and verification evidence;
+- a cover or remix preserves parent identity, license, lineage, and an explicit
+  change/deviation record; any verification that did not run remains labeled;
 - an AI skill can perform the workflow in a bounded test repository and return
   structured results without silently expanding scope;
 - the exact npm package installs in a clean consumer and supports both human

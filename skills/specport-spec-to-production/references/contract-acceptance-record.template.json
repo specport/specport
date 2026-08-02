@@ -1,0 +1,9 @@
+{
+  "artifactKind": "contract-acceptance-record",
+  "decision": "accepted",
+  "acceptedBy": "REPLACE_WITH_HUMAN_APPROVER",
+  "acceptedAt": "2026-01-01T00:00:00.000Z",
+  "contractPath": ".specport/contract.json",
+  "contractSha256": "REPLACE_WITH_SHA256_OF_EXACT_CONTRACT_BYTES",
+  "decisionSource": "REPLACE_WITH_DURABLE_TICKET_OR_REVIEW_REFERENCE"
+}

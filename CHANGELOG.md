@@ -21,5 +21,11 @@ exact npm artifact and clean-consumer smoke test pass.
 - Added a bounded, deterministic repository map for file roles, static symbols,
   local import edges, package/HTTP/CLI surfaces, scan limits, and explicit
   unknowns; it executes no repository code and is not a runtime contract.
+- Added lineage-aware `spec cover`, `spec remix`, and `spec build` artifacts.
+  Cover creates a gated target plan, remix preserves parent identity and
+  attribution in a draft, and build creates a handoff without generating or
+  executing target code.
+- Added a content SHA-256 to GitHub pull receipts and a durable contract
+  acceptance-record template for digest-bound human authority.
 - Added a release runbook that separates candidate evidence from npm and Pages
   publication proof and documents recovery boundaries.

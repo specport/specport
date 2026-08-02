@@ -1,6 +1,6 @@
 # SpecPort
 
-## Catch review gaps. Ship with a contract.
+## Catch review gaps before merge.
 
 SpecPort is a local, deterministic npm CLI for the moment after an AI coding
 tool (or a person) finishes a change and before somebody approves or ships it.
@@ -13,6 +13,12 @@ verification, human taste review, and a shippable release handoff.
 
 SpecPort does not record prompts, call an AI model, replace a code reviewer, or
 pretend that a passing test proves a product is good.
+
+The sharpest reason to install it today is final-tree review coverage: after an
+AI agent finishes, prove that the exact Git-visible tree is the tree a real
+receiver or approved scope covered. The spec, contract, and lifecycle surfaces
+extend that boundary, but they are not a substitute for an implementation
+runtime or human approval.
 
 ## Install
 
@@ -158,9 +164,10 @@ repeatable verification, a human taste rubric, and release compatibility,
 security, observability, rollback, and ship authority fields. It checks
 contract shape; it does not grant approval.
 
-Pull a licensed spec from GitHub at a named ref. SpecPort resolves that ref to
-one commit, fetches only the requested file, records the license and source
-identity, and executes no repository code:
+Pull a spec from GitHub at a named ref when its repository declares a usable
+license. SpecPort resolves that ref to one commit, fetches only the requested
+file, records the declared license and source identity, and executes no
+repository code:
 
 ```bash
 specport pull owner/repo@v1.2.0:specs/SPEC.md \
@@ -171,6 +178,48 @@ specport pull owner/repo@v1.2.0:specs/SPEC.md \
 The pull is read-only until you choose an output path. A receipt is written
 next to `--out` by default, or at `--receipt` when supplied. A missing license,
 unsafe path, missing file, or unresolved GitHub ref is a hold signal.
+The receipt's license is a matched GitHub declaration, not independent legal
+verification of file-level rights; review attribution and compatibility before
+redistributing a pulled spec.
+
+## Cover, remix, and build handoffs
+
+The lifecycle commands make the next AI-assisted implementation step explicit
+without pretending that a plan is a finished product:
+
+```bash
+# Plan a bounded cover assessment for a target repository.
+specport spec cover SPEC.md \
+  --target . \
+  --target-stack node \
+  --contract .specport/contract.json \
+  --provenance .specport/pulls/source.receipt.json \
+  --json
+
+# Create a parent-preserving remix draft.
+specport spec remix SPEC.md \
+  --change "Use a local-only storage adapter" \
+  --change "Add an offline recovery scenario" \
+  --out SPEC.remix.md
+
+# Produce a human-gated implementation handoff.
+specport spec build SPEC.md \
+  --target . \
+  --target-stack node \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/contract-acceptance.json \
+  --provenance .specport/pulls/source.receipt.json \
+  --json
+```
+
+`cover` is `ready` only when the source receipt's declared license matches the
+parent bytes, the accepted spec,
+contract, target stack, and bounded repository inspection pass. `remix` is
+always a draft until a human rechecks the inherited contract and attribution.
+`build` is a `ready` handoff only when the acceptance record names the human
+approver and matches the exact contract SHA-256. The current CLI does not
+generate code, execute target code, run checks, perform taste review, or approve
+release; the host agent or human owner must do those steps and record evidence.
 
 The included skills are designed for agent environments:
 
@@ -213,15 +262,17 @@ never executes a declared check; a selected check is recorded as `not-run`.
 | 0 | Diagnostic completed or exact coverage is complete |
 | 2 | Usage, Git, or input error |
 | 4 | Requested output could not be written |
-| 5 | Coverage, contract, or spec readiness requires review |
+| 5 | Coverage, contract, spec, or lifecycle gates require review |
 | 7 | Requested receiver is unavailable or could not consume a finding |
 
 ## What SpecPort is not
 
 SpecPort is not an AI reviewer, session recorder, prompt store, package
 manager, rollback tool, sandbox, hosted telemetry service, or generic
-code-to-spec compiler. It does not infer behavior from hashes. It does not
-replace tests, security review, product judgment, or a human ship decision.
+code-to-spec compiler. Its lifecycle artifacts are not a dependency resolver
+or a general code-generation engine. It does not infer behavior from hashes.
+It does not replace tests, security review, product judgment, or a human ship
+decision.
 
 The receiver-first coverage path is the current proven wedge. The contract and
 agent-skill surfaces are intentionally explicit extensions: their value still
@@ -230,8 +281,9 @@ a faster or better merge/hold/ship decision.
 
 ## Privacy boundary
 
-Repository inspection is local. SpecPort sends requests only to the explicitly
-requested local receiver URL. It does not upload source, prompts, transcripts,
+Repository inspection is local. Coverage sends requests only to the explicitly
+requested local receiver URL. `pull` intentionally contacts GitHub for the
+requested ref and file. SpecPort does not upload source, prompts, transcripts,
 or credentials to a SpecPort service. Keep generated artifacts in the project
 only when the repository's own policy allows it.
 
@@ -260,9 +312,10 @@ in [`RELEASE.md`](RELEASE.md).
 SpecPort is an npm-ready receiver-first release candidate with deterministic
 repository discovery, source-preserving draft authoring, spec readiness checks,
 contract-shape validation, a provenance-preserving GitHub spec pull, bounded
-static repository mapping, and packaged agent playbook export. Public npm
-publication, a live receiver deployment, cross-platform validation, and
-repeated maintainer adoption are external gates; the project does not claim
+static repository mapping, lineage-aware cover/remix/build handoffs, and
+packaged agent playbook export. Public npm publication, a live receiver
+deployment, cross-platform validation, code-generating adapters, and repeated
+maintainer adoption are external or future gates; the project does not claim
 those are proven by local tests.
 
 More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).

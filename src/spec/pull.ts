@@ -6,6 +6,8 @@
  * inspect GitHub metadata and return the selected file as text.
  */
 
+import { createHash } from 'node:crypto';
+
 export const DEFAULT_SPEC_PATH = 'SPEC.md';
 export const PULL_RECEIPT_SCHEMA_VERSION = '1';
 const MAX_SPEC_BYTES = 2 * 1024 * 1024;
@@ -91,6 +93,8 @@ export interface GitHubSpecPullReceipt {
     readonly sha: string | null;
     readonly encoding: 'base64';
   };
+  /** SHA-256 of the decoded UTF-8 spec bytes, for derived-artifact lineage. */
+  readonly contentSha256: string;
   readonly provenance: GitHubSpecProvenance;
   /** Explicitly records that no repository code was executed. */
   readonly execution: 'none';
@@ -296,6 +300,7 @@ export async function pullGitHubSpec(
     license,
     licenseDetails: repositoryMetadata.license,
     repositoryMetadata,
+    contentSha256: createHash('sha256').update(file.text, 'utf8').digest('hex'),
     content: file.metadata,
     provenance,
     execution: 'none',

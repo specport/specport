@@ -11,7 +11,7 @@
     <meta property="og:title" content="SpecPort — from done to shippable" />
     <meta
       property="og:description"
-      content="Catch review gaps. Ship with a contract."
+      content="Catch review gaps before merge."
     />
     <meta property="og:type" content="website" />
     <title>SpecPort — from done to shippable</title>
@@ -39,11 +39,12 @@
       <section class="hero shell">
         <div class="hero-copy">
           <div class="eyebrow"><span class="pulse"></span> local · deterministic · contract-bound</div>
-          <h1>The last mile between <em>done</em> and shippable.</h1>
+          <h1>Prove the final tree before <em>merge</em>.</h1>
           <p class="hero-lede">
-            SpecPort reads the final Git-visible tree, binds it to the review
-            source that actually matters, and carries accepted product contracts
-            through proof, taste, and release.
+            SpecPort reads the final Git-visible tree and binds it to the review
+            source that actually matters. Contracts and lifecycle artifacts make
+            the next implementation step explicit without impersonating a ship
+            decision.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#install">Install the CLI <span>↓</span></a>
@@ -196,8 +197,9 @@
           <p>
             The receiver-first wedge is the current product. The contract layer
             now includes deterministic draft authoring, readiness checks, a
-            bounded repository map, and a provenance-preserving GitHub pull,
-            while staying honest about what still needs a human.
+            bounded repository map, a provenance-preserving GitHub pull, and
+            lineage-aware lifecycle handoffs, while staying honest about what
+            still needs a human.
           </p>
         </div>
         <div class="state-table" role="table" aria-label="SpecPort capabilities">
@@ -205,9 +207,12 @@
           <div class="state-row" role="row"><span role="cell"><code>coverage</code></span><span role="cell">Compares the final Git-visible tree with a real receiver or approved scope.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>spec discover</code></span><span role="cell">Generates a grounded repository baseline and exposes unresolved contract fields.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>spec validate</code></span><span role="cell">Checks the shape of a human-owned product contract before implementation.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>pull</code></span><span role="cell">Fetches one licensed spec at a resolved GitHub commit and records provenance without executing repository code.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>pull</code></span><span role="cell">Fetches one spec from a repository with a declared license at a resolved GitHub commit and records provenance without executing repository code.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>create / check</code></span><span role="cell">Preserves rough input as a draft, then checks provenance, criteria, verification, taste, release, and acceptance.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>spec map</code></span><span role="cell">Produces a bounded static implementation map with file roles, simple symbols, local edges, surfaces, and explicit unknowns. No repository code runs.</span><span role="cell" class="status-live">shipping</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec cover</code></span><span role="cell">Builds a lineage, license, contract, and target-assessment plan; ready means handoff-ready, not code-complete.</span><span role="cell" class="status-human">bounded handoff</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec remix</code></span><span role="cell">Preserves the parent digest and attribution boundary while recording an explicit change set.</span><span role="cell" class="status-human">draft + human gate</span></div>
+          <div class="state-row" role="row"><span role="cell"><code>spec build</code></span><span role="cell">Produces a bounded implementation handoff after contract acceptance; it does not generate or run code.</span><span role="cell" class="status-human">human gate</span></div>
           <div class="state-row" role="row"><span role="cell"><code>skill list / export</code></span><span role="cell">Lists and copies the packaged agent playbooks without silently overwriting a host skill directory.</span><span role="cell" class="status-live">shipping</span></div>
           <div class="state-row" role="row"><span role="cell"><code>taste</code></span><span role="cell">Names the human review that automation cannot provide.</span><span role="cell" class="status-human">human gate</span></div>
         </div>
@@ -254,7 +259,7 @@
 
     <footer class="site-footer shell">
       <div class="footer-brand"><span class="wordmark-mark">SP</span><span>specport</span></div>
-      <p>Catch review gaps. Ship with a contract.</p>
+      <p>Catch review gaps before merge.</p>
       <div class="footer-links"><a href="https://github.com/stancsz/specport">GitHub</a><a href="https://www.npmjs.com/package/@specport/specport">npm</a><a href="#top">Back to top ↑</a></div>
     </footer>
     <script src="./app.js" defer></script>

@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specport.dev/schemas/spec-lifecycle.schema.json",
+  "title": "SpecPort lifecycle artifact",
+  "description": "Lineage-aware cover, remix, and build-handoff artifacts. Ready means ready for the named bounded step, never shipped.",
+  "type": "object",
+  "required": ["schemaVersion", "artifactKind", "status", "generatedAt", "identity", "lineage", "decision"],
+  "properties": {
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "artifactKind": { "type": "string", "enum": ["spec-cover", "spec-remix", "spec-build-handoff"] },
+    "status": { "type": "string", "enum": ["draft", "blocked", "ready"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "identity": { "$ref": "#/$defs/identity" },
+    "lineage": {
+      "type": "object",
+      "required": ["parents"],
+      "properties": {
+        "relation": { "type": "string", "enum": ["cover", "remix", "build"] },
+        "relationship": { "const": "remix" },
+        "parents": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/parent" } },
+        "attributionRequired": { "const": true },
+        "licenseStatus": { "const": "inherited-requires-review" }
+      },
+      "additionalProperties": false
+    },
+    "decision": { "$ref": "#/$defs/decision" },
+    "gates": { "type": "array", "items": { "$ref": "#/$defs/gate" } },
+    "gateState": { "$ref": "#/$defs/gateState" },
+    "target": { "$ref": "#/$defs/target" },
+    "contract": { "$ref": "#/$defs/contract" },
+    "acceptance": {
+      "anyOf": [
+        { "$ref": "#/$defs/acceptance" },
+        { "$ref": "#/$defs/remixAcceptance" }
+      ]
+    },
+    "license": { "type": "object" },
+    "compatibility": { "type": "object" },
+    "deviations": { "type": "array", "items": { "type": "string" } },
+    "verification": { "type": "object" },
+    "authority": { "type": "object" },
+    "changeSet": { "type": "array", "items": { "$ref": "#/$defs/change" } },
+    "reason": { "type": "string" },
+    "source": { "type": "string" },
+    "unknowns": { "type": "array", "items": { "type": "string" } },
+    "nextActions": { "type": "array", "items": { "type": "string" } },
+    "requestedStack": { "type": ["string", "null"] },
+    "execution": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "artifactKind": { "const": "spec-cover" } } },
+      "then": {
+        "required": ["target", "contract", "license", "compatibility", "deviations", "verification", "authority", "gates", "gateState", "nextActions"],
+        "properties": {
+          "lineage": {
+            "required": ["relation"],
+            "properties": { "relation": { "const": "cover" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "artifactKind": { "const": "spec-remix" } } },
+      "then": {
+        "required": ["license", "changeSet", "reason", "acceptance", "source", "unknowns", "nextActions"],
+        "properties": {
+          "lineage": {
+            "required": ["relationship", "attributionRequired", "licenseStatus"],
+            "properties": { "relationship": { "const": "remix" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "artifactKind": { "const": "spec-build-handoff" } } },
+      "then": {
+        "required": ["target", "contract", "acceptance", "license", "requestedStack", "execution", "gates", "gateState", "nextActions"],
+        "properties": {
+          "lineage": {
+            "required": ["relation"],
+            "properties": { "relation": { "const": "build" } }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": true,
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "required": ["specId", "version", "contentSha256"],
+      "properties": {
+        "specId": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "contentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "license": {
+      "type": "object",
+      "required": ["expression", "scope", "status", "evidence", "attributionRequired"],
+      "properties": {
+        "expression": { "type": ["string", "null"] },
+        "scope": { "type": "string", "enum": ["file", "repository", "unknown"] },
+        "status": { "type": "string", "enum": ["verified", "declared", "unknown", "failed"] },
+        "evidence": { "type": ["string", "null"] },
+        "attributionRequired": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "parent": {
+      "type": "object",
+      "required": ["path", "specId", "version", "sha256", "bytes", "readiness", "accepted", "sourceLicense"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "specId": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "readiness": { "type": "string", "enum": ["ready", "draft", "invalid"] },
+        "accepted": { "type": "boolean" },
+        "sourceLicense": { "$ref": "#/$defs/license" }
+      },
+      "additionalProperties": false
+    },
+    "gate": {
+      "type": "object",
+      "required": ["id", "status", "evidence", "nextAction"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["pass", "blocked", "unknown", "not-run"] },
+        "evidence": { "type": "string", "minLength": 1 },
+        "nextAction": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "gateState": {
+      "type": "object",
+      "required": ["license", "compatibility", "acceptance", "taste", "release"],
+      "properties": {
+        "license": { "type": "string", "enum": ["pass", "fail", "unknown"] },
+        "compatibility": { "type": "string", "enum": ["pass", "fail", "unknown"] },
+        "acceptance": { "type": "string", "enum": ["pass", "pending", "rejected"] },
+        "taste": { "type": "string", "enum": ["pass", "pending", "not-required"] },
+        "release": { "type": "string", "enum": ["pass", "pending", "blocked"] }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["state", "actor", "at", "source", "inputDigest"],
+      "properties": {
+        "state": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "actor": { "type": ["string", "null"] },
+        "at": { "type": ["string", "null"] },
+        "source": { "type": ["string", "null"] },
+        "inputDigest": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": ["path", "stack", "repository", "observedLanguages", "observedSurfaces", "unknownCount", "mapSafety"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "stack": { "type": ["string", "null"] },
+        "repository": { "type": "object" },
+        "observedLanguages": { "type": "array", "items": { "type": "string" } },
+        "observedSurfaces": { "type": "integer", "minimum": 0 },
+        "unknownCount": { "type": "integer", "minimum": 0 },
+        "mapSafety": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "required": ["path", "provided", "valid", "contentSha256", "bytes", "issueCount", "issues"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "provided": { "type": "boolean" },
+        "valid": { "type": "boolean" },
+        "contentSha256": { "type": ["string", "null"] },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "issueCount": { "type": "integer", "minimum": 0 },
+        "issues": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "acceptance": {
+      "type": "object",
+      "required": ["path", "provided", "sha256", "bytes", "decision", "actor", "at", "inputDigest", "contractPath", "decisionSource"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "provided": { "type": "boolean" },
+        "sha256": { "type": ["string", "null"] },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "decision": { "type": "string", "enum": ["accepted", "invalid", "missing"] },
+        "actor": { "type": ["string", "null"] },
+        "at": { "type": ["string", "null"] },
+        "inputDigest": { "type": ["string", "null"] },
+        "contractPath": { "type": ["string", "null"] },
+        "decisionSource": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "remixAcceptance": {
+      "type": "object",
+      "required": ["status", "owner"],
+      "properties": {
+        "status": { "const": "not-accepted" },
+        "owner": { "const": "human-required" }
+      },
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "required": ["id", "statement"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

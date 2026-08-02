@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -99,6 +100,9 @@ describe('GitHub spec pull', () => {
         commit,
         path: 'docs/SPEC.md',
         license: 'MIT',
+        contentSha256: createHash('sha256')
+          .update(rawContent, 'utf8')
+          .digest('hex'),
         execution: 'none',
       }),
     );

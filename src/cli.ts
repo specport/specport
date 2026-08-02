@@ -40,6 +40,12 @@ import {
   renderSpecDraftMarkdown,
 } from './spec/authoring.js';
 import { readAndValidateProductContract } from './spec/contract.js';
+import {
+  createBuildHandoff,
+  createCoverPlan,
+  createRemixArtifact,
+  renderLifecycleMarkdown,
+} from './spec/lifecycle.js';
 import { mapRepository, renderRepositoryMapMarkdown } from './spec/map.js';
 import {
   GitHubSpecPullError,
@@ -68,6 +74,9 @@ interface Options {
     | 'spec-create'
     | 'spec-discover'
     | 'spec-map'
+    | 'spec-cover'
+    | 'spec-remix'
+    | 'spec-build'
     | 'spec-validate'
     | 'skill-export'
     | 'skill-list'
@@ -87,6 +96,12 @@ interface Options {
   generatedAt?: string;
   source?: string;
   receiptPath?: string;
+  targetPath?: string;
+  targetStack?: string;
+  provenancePath?: string;
+  acceptanceRecordPath?: string;
+  changes?: string[];
+  reason?: string;
 }
 
 interface HandoffAnswers {
@@ -143,6 +158,46 @@ export async function runCli(
       const map = await mapRepository(options.path, options.generatedAt);
       await writeMapArtifact(options, map, stdout);
       return 0;
+    }
+    if (options.command === 'spec-cover') {
+      if (!options.targetPath)
+        throw new UsageError('spec cover requires --target <repository>.');
+      const plan = await createCoverPlan(
+        options.path,
+        options.targetPath,
+        options.targetStack,
+        options.contractPath,
+        options.provenancePath,
+        options.generatedAt,
+      );
+      await writeLifecycleArtifact(options, plan, stdout);
+      return plan.status === 'ready' ? 0 : 5;
+    }
+    if (options.command === 'spec-remix') {
+      const remix = await createRemixArtifact(
+        options.path,
+        options.changes ?? [],
+        options.reason,
+        options.provenancePath,
+        options.generatedAt,
+      );
+      await writeLifecycleArtifact(options, remix, stdout);
+      return 0;
+    }
+    if (options.command === 'spec-build') {
+      if (!options.targetPath)
+        throw new UsageError('spec build requires --target <repository>.');
+      const handoff = await createBuildHandoff(
+        options.path,
+        options.targetPath,
+        options.targetStack,
+        options.contractPath,
+        options.acceptanceRecordPath,
+        options.provenancePath,
+        options.generatedAt,
+      );
+      await writeLifecycleArtifact(options, handoff, stdout);
+      return handoff.status === 'ready' ? 0 : 5;
     }
     if (options.command === 'spec-create') {
       const draft = await createSpecDraft(
@@ -374,7 +429,10 @@ function parseArgs(argv: readonly string[]): Options {
   if (
     rawCommand === 'create' ||
     rawCommand === 'check' ||
-    rawCommand === 'map'
+    rawCommand === 'map' ||
+    rawCommand === 'cover' ||
+    rawCommand === 'remix' ||
+    rawCommand === 'build'
   ) {
     return parseSpecArgs([rawCommand, ...args]);
   }
@@ -494,6 +552,12 @@ function parseSpecArgs(args: string[]): Options {
     if (positional[0]) options.path = positional[0];
     return options;
   }
+  if (
+    subcommand === 'cover' ||
+    subcommand === 'remix' ||
+    subcommand === 'build'
+  )
+    return parseLifecycleArgs(subcommand, args);
   if (subcommand === 'validate') {
     const options: Options = {
       ...baseOptions('spec-validate'),
@@ -599,8 +663,92 @@ function parseSpecArgs(args: string[]): Options {
     return options;
   }
   throw new UsageError(
-    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, or `spec validate <contract.json>`.',
+    'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, `spec map [path]`, `spec cover <SPEC.md>`, `spec remix <SPEC.md>`, `spec build <SPEC.md>`, or `spec validate <contract.json>`.',
   );
+}
+
+function parseLifecycleArgs(
+  subcommand: 'cover' | 'remix' | 'build',
+  args: string[],
+): Options {
+  const command =
+    subcommand === 'cover'
+      ? 'spec-cover'
+      : subcommand === 'remix'
+        ? 'spec-remix'
+        : 'spec-build';
+  const options: Options = {
+    ...baseOptions(command),
+    path: '',
+    json: false,
+    force: false,
+    interactive: false,
+    changes: [],
+  };
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    switch (arg) {
+      case '--json':
+        options.json = true;
+        break;
+      case '--force':
+        options.force = true;
+        break;
+      case '--out':
+      case '--write':
+        options.writePath = requiredValue(args, ++index, arg);
+        break;
+      case '--target':
+      case '--target-repo':
+        options.targetPath = requiredValue(args, ++index, arg);
+        break;
+      case '--target-stack':
+      case '--stack':
+        options.targetStack = requiredValue(args, ++index, arg);
+        break;
+      case '--contract':
+        options.contractPath = requiredValue(args, ++index, arg);
+        break;
+      case '--acceptance-record':
+        options.acceptanceRecordPath = requiredValue(args, ++index, arg);
+        break;
+      case '--provenance':
+        options.provenancePath = requiredValue(args, ++index, arg);
+        break;
+      case '--change':
+        options.changes?.push(requiredValue(args, ++index, arg));
+        break;
+      case '--reason':
+        options.reason = requiredValue(args, ++index, arg);
+        break;
+      case '--generated-at':
+        options.generatedAt = normalizedGeneratedAt(
+          requiredValue(args, ++index, arg),
+        );
+        break;
+      case '--help':
+      case '-h':
+        throw new UsageError(helpText());
+      default:
+        if (arg.startsWith('-')) throw new UsageError(`Unknown option: ${arg}`);
+        positional.push(arg);
+    }
+  }
+  if (positional.length !== 1)
+    throw new UsageError(`spec ${subcommand} requires one SPEC.md path.`);
+  if ((subcommand === 'cover' || subcommand === 'build') && !options.targetPath)
+    throw new UsageError(`spec ${subcommand} requires --target <repository>.`);
+  if (
+    subcommand === 'remix' &&
+    !options.changes?.some((change) => change.trim())
+  )
+    throw new UsageError(
+      'spec remix requires at least one --change <statement>.',
+    );
+  options.path = positional[0] ?? '';
+  return options;
 }
 
 function parsePullArgs(args: string[]): Options {
@@ -1189,6 +1337,51 @@ async function writeMapArtifact(
       `UNKNOWNS   ${map.unknowns.length}`,
       'EXECUTION  none',
       ...(options.writePath ? [`WROTE      ${options.writePath}`] : []),
+      '',
+    ].join('\n'),
+  );
+}
+
+async function writeLifecycleArtifact(
+  options: Options,
+  artifact:
+    | Awaited<ReturnType<typeof createCoverPlan>>
+    | Awaited<ReturnType<typeof createRemixArtifact>>
+    | Awaited<ReturnType<typeof createBuildHandoff>>,
+  stdout: NodeJS.WritableStream,
+): Promise<void> {
+  const json = `${JSON.stringify(artifact, null, 2)}\n`;
+  const markdown = renderLifecycleMarkdown(artifact);
+  let outputPath: string | undefined;
+  if (options.writePath) {
+    outputPath = resolve(options.writePath);
+    await writeSpecOutput(
+      outputPath,
+      options.json ? json : markdown,
+      options.force,
+    );
+  }
+  if (options.json) {
+    stdout.write(json);
+    return;
+  }
+  const parent = artifact.lineage.parents[0];
+  const gateSummary =
+    artifact.artifactKind === 'spec-remix'
+      ? 'not applicable; remix remains a draft'
+      : `${artifact.gates.filter((gate) => gate.status === 'pass').length}/${artifact.gates.length} pass`;
+  stdout.write(
+    [
+      `${artifact.artifactKind.toUpperCase()}  ${artifact.status}`,
+      `PARENT     ${parent?.path ?? '(none)'}`,
+      `DIGEST     ${artifact.identity.contentSha256}`,
+      `GATES      ${gateSummary}`,
+      `EXECUTION  ${
+        artifact.artifactKind === 'spec-build-handoff'
+          ? 'handoff only; no code or checks run'
+          : 'none'
+      }`,
+      ...(outputPath ? [`WROTE      ${outputPath}`] : []),
       '',
     ].join('\n'),
   );
@@ -1883,12 +2076,18 @@ Usage:
   specport spec check <SPEC.md> [--json] [--write REPORT]
   specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec map [path] [--out MAP.md] [--json] [--force] [--generated-at ISO-8601]
+  specport spec cover <SPEC.md> --target <repo> --target-stack <stack> [--contract FILE] [--provenance RECEIPT] [--out FILE] [--json] [--force]
+  specport spec remix <SPEC.md> --change <statement> [--change <statement> ...] [--reason TEXT] [--provenance RECEIPT] [--out FILE] [--json] [--force]
+  specport spec build <SPEC.md> --target <repo> --target-stack <stack> --contract FILE --acceptance-record FILE [--provenance RECEIPT] [--out FILE] [--json] [--force]
   specport spec validate [contract.json] [--json]
   specport skill list [--json]
   specport skill export <name> --out <directory> [--json] [--force]
   specport create <input> ...  (alias)
   specport check <SPEC.md> ... (alias)
   specport map [path] ...       (top-level alias for spec map)
+  specport cover <SPEC.md> ...  (top-level alias for spec cover)
+  specport remix <SPEC.md> ...  (top-level alias for spec remix)
+  specport build <SPEC.md> ...  (top-level alias for spec build)
   specport --version
 
 Spec workflows:
@@ -1896,6 +2095,9 @@ Spec workflows:
   spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec map        generate a bounded static repository map with explicit unknowns
+  spec cover      prepare a provenance- and contract-gated target implementation plan
+  spec remix      create a lineage-preserving draft with an explicit change set
+  spec build      create a human-gated implementation handoff; it does not generate code
   spec validate    validate a human-owned product contract before implementation
   pull            fetch one licensed spec from GitHub at a resolved commit; never executes repository code
   skill list       list the packaged agent playbooks
@@ -1919,7 +2121,7 @@ Exit codes:
   0  diagnostic completed or exact coverage is complete
   2  usage, Git, or input error
   4  requested output could not be written
-  5  coverage is partial or cannot be established
+  5  coverage, contract, spec, or lifecycle gates require review
   7  requested receiver is unavailable or could not consume a finding
 `;
 }

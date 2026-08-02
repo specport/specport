@@ -378,11 +378,24 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   files, simple symbols, local imports, and explicit surfaces. Inferred edges
   and all scan limits/unknowns remain labeled; it does not prove runtime
   behavior, security, taste, or product intent.
-- `specport pull <owner/repo@ref[:path]> [--out SPEC.md]` fetches one licensed
-  GitHub file at a resolved commit, writes a provenance receipt when requested,
-  and executes no repository code.
+- `specport pull <owner/repo@ref[:path]> [--out SPEC.md]` fetches one GitHub
+  file from a repository with a declared license at a resolved commit, writes a
+  provenance receipt when requested, and executes no repository code. Treat
+  that license as a matched source declaration, not independent legal proof.
+- `specport spec cover <SPEC.md> --target <repo> --target-stack <stack>` creates
+  a lineage-aware target-assessment and implementation plan. A `ready` result
+  means the source license, accepted spec, contract, and bounded target map
+  passed; it does not mean code was generated or verified.
+- `specport spec remix <SPEC.md> --change <statement>` creates a draft with the
+  parent content digest, an explicit change set, and inherited attribution
+  obligations. It always requires human re-acceptance before implementation.
+- `specport spec build <SPEC.md> --target <repo> --target-stack <stack>
+  --contract <contract.json> --acceptance-record <record.json>` creates a
+  handoff only. The acceptance record must name the human approver and contain
+  a `contractSha256` matching the exact contract bytes. The command does not
+  execute repository code, run checks, perform taste review, or approve release.
 
-Do not describe roadmap verbs such as `cover`, `remix`, or `build` as
-implemented CLI behavior unless the installed version's help and runtime prove
-them. Use the host agent's bounded coding tools for implementation and the
-commands above for the evidence surfaces they actually provide.
+The top-level aliases `specport cover`, `specport remix`, and `specport build`
+are retained for convenience, but the `spec` namespace is canonical. Use the
+host agent's bounded coding tools for implementation and the commands above for
+the evidence surfaces they actually provide.
