@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { lstat, readFile, readlink, realpath, stat } from 'node:fs/promises';
-import { dirname, relative, resolve } from 'node:path';
+import { basename, dirname, relative, resolve } from 'node:path';
 import { fingerprintCanonical, normalizeRepoPath } from '../core/coverage.js';
 import type { FinalTreeSnapshot } from '../core/types.js';
 import { runGit } from '../git/command.js';
@@ -115,7 +115,7 @@ export async function createSpecLock(
   const gitRepository = await tryDiscoverRepository(dirname(absoluteSpecPath));
   const root =
     gitRepository?.root ?? (await realpath(dirname(absoluteSpecPath)));
-  const absoluteLockPath = resolve(lockPath);
+  const absoluteLockPath = await canonicalPath(resolve(lockPath));
   const ignoredPaths = ignoredPathsFor(root, absoluteLockPath);
   const finalTree = gitRepository ? await tryCaptureFinalTree(root) : null;
   const finalTreeFingerprint = gitRepository
@@ -511,6 +511,14 @@ async function tryCaptureSourceTreeFingerprint(
     return await captureSourceTreeFingerprint(root, ignoredPaths);
   } catch {
     return null;
+  }
+}
+
+async function canonicalPath(path: string): Promise<string> {
+  try {
+    return resolve(await realpath(dirname(path)), basename(path));
+  } catch {
+    return path;
   }
 }
 
