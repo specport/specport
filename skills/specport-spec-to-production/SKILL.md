@@ -374,6 +374,10 @@ Use the current CLI for evidence, not for capabilities it does not yet ship:
   approval.
 - `specport spec discover` observes a repository baseline; it does not infer
   product intent or acceptance.
+- `specport spec bundle` composes the repository baseline, bounded map,
+  draft-only `SPEC.md`, evidence ledger, structural check, and packet manifest
+  in one read-only pass; exit `5` is expected until the human contract is
+  accepted.
 - `specport spec map [path] [--json]` creates a read-only bounded static map of
   files, simple symbols, local imports, and explicit surfaces. Inferred edges
   and all scan limits/unknowns remain labeled; it does not prove runtime
