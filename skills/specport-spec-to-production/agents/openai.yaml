@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spec to Production"
+  short_description: "Implement, verify, taste, and ship a contract"
+  default_prompt: "Use $specport-spec-to-production to carry this accepted contract to a shippable release."
+policy:
+  allow_implicit_invocation: true

@@ -138,7 +138,10 @@ specport spec validate .specport/contract.json
 
 Start from [`examples/product-contract.json`](examples/product-contract.json)
 and [`schemas/product-contract.schema.json`](schemas/product-contract.schema.json).
-The validator checks contract shape; it does not grant approval.
+The validator requires provenance/license ownership, scenario evidence,
+repeatable verification, a human taste rubric, and release compatibility,
+security, observability, rollback, and ship authority fields. It checks
+contract shape; it does not grant approval.
 
 The included skills are designed for agent environments:
 
@@ -150,6 +153,18 @@ The included skills are designed for agent environments:
 
 They are a bounded execution protocol, not a claim that one prompt can
 generate arbitrary production software without a human owner or evidence.
+
+The package also exposes the playbooks for host-agent installation:
+
+```bash
+specport skill list
+specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
+specport skill export specport-spec-to-production --out .codex/skills/specport-spec-to-production
+```
+
+Exports refuse to overwrite an existing directory unless `--force` is
+explicit. The exported bundle includes the playbook metadata and evidence
+templates.
 
 ## Output and exit codes
 
@@ -206,12 +221,16 @@ npm run verify:package
 artifact, install it in a clean consumer, run the installed binary, and inspect
 the packed file list; passing TypeScript alone is not release evidence.
 
+Contribution and vulnerability handling are documented in
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md).
+
 ## Status
 
-SpecPort is an npm-installable receiver-first release with deterministic
+SpecPort is an npm-ready receiver-first release candidate with deterministic
 repository discovery, source-preserving draft authoring, spec readiness checks,
-and contract-shape validation. A live receiver deployment, cross-platform
-validation, and repeated maintainer adoption are external gates; the project
-does not claim those are proven by local tests.
+contract-shape validation, and packaged agent playbook export. Public npm
+publication, a live receiver deployment, cross-platform validation, and
+repeated maintainer adoption are external gates; the project does not claim
+those are proven by local tests.
 
 More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).

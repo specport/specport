@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1",
+  "artifactKind": "repo-to-spec-evidence-ledger",
+  "repository": {
+    "root": "REPLACE_WITH_CANONICAL_REPOSITORY_ROOT",
+    "identity": null,
+    "headCommit": null,
+    "authoritativeTree": "REPLACE_WITH_COMMIT_OR_EXPLICIT_WORKING_TREE",
+    "baselineArtifact": ".specport/repository-baseline.json"
+  },
+  "observed": [
+    {
+      "id": "OBS-001",
+      "claim": "REPLACE_WITH_A_FACT_DIRECTLY_SUPPORTED_BY_EVIDENCE",
+      "sources": [
+        {
+          "kind": "file",
+          "path": "REPLACE_WITH_REPOSITORY_RELATIVE_PATH",
+          "locator": "REPLACE_WITH_LINE_HEADING_SYMBOL_OR_CONFIG_KEY",
+          "ref": "REPLACE_WITH_COMMIT_OR_WORKING_TREE"
+        }
+      ]
+    }
+  ],
+  "inferred": [
+    {
+      "id": "INF-001",
+      "claim": "REPLACE_WITH_A_REASONED_INTERPRETATION",
+      "basis": ["OBS-001"],
+      "confidence": "medium",
+      "needsHumanConfirmation": true
+    }
+  ],
+  "unknown": [
+    {
+      "id": "UNK-001",
+      "question": "REPLACE_WITH_A_MATERIAL_UNANSWERED_DECISION",
+      "materiality": "blocks",
+      "blocks": ["acceptance", "release"],
+      "owner": "human"
+    }
+  ],
+  "accepted": [],
+  "commands": [
+    {
+      "id": "CMD-001",
+      "command": "REPLACE_WITH_EXACT_COMMAND",
+      "purpose": "REPLACE_WITH_WHAT_THIS_COMMAND_ESTABLISHES",
+      "ranAt": "REPLACE_WITH_ISO_8601_TIMESTAMP",
+      "exitCode": null,
+      "evidencePath": "REPLACE_WITH_OUTPUT_PATH_OR_NOT_CAPTURED"
+    }
+  ],
+  "handoff": {
+    "specPath": "SPEC.md",
+    "contractPath": ".specport/contract.json",
+    "nextSkill": "specport-spec-to-production",
+    "status": "draft-only",
+    "ownerDecision": "pending",
+    "limitations": ["REPLACE_WITH_KNOWN_LIMITATION"]
+  }
+}

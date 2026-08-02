@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import {
+  access,
+  cp,
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -45,6 +52,8 @@ interface Options {
     | 'spec-create'
     | 'spec-discover'
     | 'spec-validate'
+    | 'skill-export'
+    | 'skill-list'
     | 'version';
   path: string;
   json: boolean;
@@ -57,6 +66,7 @@ interface Options {
   expectedScopePath?: string;
   receiverUrl?: string;
   contractPath?: string;
+  skillName?: string;
 }
 
 interface HandoffAnswers {
@@ -116,6 +126,25 @@ export async function runCli(
       const validation = await readAndValidateProductContract(contractPath);
       writeContractValidation(options, contractPath, validation, stdout);
       return validation.valid ? 0 : 5;
+    }
+    if (options.command === 'skill-list') {
+      const skills = await discoverSkills();
+      writeSkillList(options, skills, stdout);
+      return 0;
+    }
+    if (options.command === 'skill-export') {
+      if (!options.skillName || !options.writePath) {
+        throw new UsageError(
+          'skill export requires a skill name and --out <directory>.',
+        );
+      }
+      const exported = await exportSkill(
+        options.skillName,
+        options.writePath,
+        options.force,
+      );
+      writeSkillExport(options, exported, stdout);
+      return 0;
     }
 
     const actual = await captureFinalTree(options.path, options.baseRef);
@@ -304,6 +333,7 @@ function parseArgs(argv: readonly string[]): Options {
   ) {
     return parseSpecArgs([rawCommand, ...args]);
   }
+  if (rawCommand === 'skill') return parseSkillArgs(args);
   const isLegacyReview = rawCommand === 'review';
   if (rawCommand !== 'coverage' && !isLegacyReview) {
     throw new UsageError(`Unknown command: ${rawCommand}`);
@@ -515,6 +545,73 @@ function parseSpecArgs(args: string[]): Options {
   }
   throw new UsageError(
     'Use `spec create <input>`, `spec check <SPEC.md>`, `spec discover [path]`, or `spec validate <contract.json>`.',
+  );
+}
+
+function parseSkillArgs(args: string[]): Options {
+  const subcommand = args.shift() ?? 'list';
+  if (subcommand === 'list') {
+    const options: Options = {
+      ...baseOptions('skill-list'),
+      path: '.',
+      json: false,
+      force: false,
+      interactive: false,
+    };
+    for (const arg of args) {
+      if (arg === '--json') {
+        options.json = true;
+        continue;
+      }
+      if (arg === '--help' || arg === '-h') throw new UsageError(helpText());
+      throw new UsageError(`Unknown option: ${arg}`);
+    }
+    return options;
+  }
+  if (subcommand === 'export') {
+    const options: Options = {
+      ...baseOptions('skill-export'),
+      path: '.',
+      json: false,
+      force: false,
+      interactive: false,
+    };
+    const positional: string[] = [];
+    for (let index = 0; index < args.length; index += 1) {
+      const arg = args[index];
+      if (!arg) continue;
+      switch (arg) {
+        case '--json':
+          options.json = true;
+          break;
+        case '--force':
+          options.force = true;
+          break;
+        case '--out':
+        case '--write':
+          options.writePath = requiredValue(args, ++index, arg);
+          break;
+        case '--help':
+        case '-h':
+          throw new UsageError(helpText());
+        default:
+          if (arg.startsWith('-'))
+            throw new UsageError(`Unknown option: ${arg}`);
+          positional.push(arg);
+      }
+    }
+    if (positional.length !== 1)
+      throw new UsageError('skill export requires one skill name.');
+    const skillName = positional[0];
+    if (!skillName)
+      throw new UsageError('skill export requires one skill name.');
+    options.skillName = skillName;
+    if (!options.writePath)
+      throw new UsageError('skill export requires --out <directory>.');
+    return options;
+  }
+  throw new UsageError(
+    'Use `skill list` or `skill export <name> --out <directory>`.',
   );
 }
 
@@ -1034,6 +1131,174 @@ function writeContractValidation(
   stdout.write(`${lines.join('\n')}\n`);
 }
 
+interface SkillInfo {
+  name: string;
+  description: string;
+}
+
+interface SkillExportResult {
+  schemaVersion: string;
+  artifactKind: 'skill-export';
+  name: string;
+  source: string;
+  target: string;
+  files: readonly string[];
+}
+
+async function discoverSkills(): Promise<readonly SkillInfo[]> {
+  const root = skillsRoot();
+  let entries: Array<{ name: string; isDirectory(): boolean }>;
+  try {
+    entries = await readdir(root, { withFileTypes: true });
+  } catch (error) {
+    throw new Error(
+      `Skill catalog is unavailable at ${root}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+  const skills: SkillInfo[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const skillPath = join(root, entry.name, 'SKILL.md');
+    try {
+      const text = await readFile(skillPath, 'utf8');
+      const description =
+        /^description:\s*(.+)$/im.exec(text)?.[1]?.trim() ??
+        'No description declared.';
+      skills.push({
+        name: entry.name,
+        description: description.replace(/^['"]|['"]$/g, ''),
+      });
+    } catch {
+      // A directory without a SKILL.md is not an exportable skill.
+    }
+  }
+  return skills.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+async function exportSkill(
+  name: string,
+  requestedTarget: string,
+  force: boolean,
+): Promise<SkillExportResult> {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name))
+    throw new UsageError(`Invalid skill name: ${name}`);
+  const source = join(skillsRoot(), name);
+  const sourceSkills = await discoverSkills();
+  if (!sourceSkills.some((skill) => skill.name === name))
+    throw new UsageError(`Unknown skill: ${name}`);
+  const target = isAbsolute(requestedTarget)
+    ? requestedTarget
+    : resolve(requestedTarget);
+  const sourceToTarget = relative(source, target);
+  const targetIsInsideSource =
+    sourceToTarget !== '' &&
+    !sourceToTarget.startsWith('..') &&
+    !isAbsolute(sourceToTarget);
+  if (!sourceToTarget || targetIsInsideSource)
+    throw new UsageError(
+      'Skill export target must not be the skill source or a child of it.',
+    );
+  if (!force) {
+    try {
+      await access(target);
+      throw new OutputError(`Refusing to overwrite ${target}; pass --force.`);
+    } catch (error) {
+      if (error instanceof OutputError) throw error;
+      if (!isMissingPathError(error))
+        throw new OutputError(
+          `Could not inspect ${target}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+    }
+  }
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await cp(source, target, { recursive: true, force });
+  } catch (error) {
+    throw new OutputError(
+      `Could not export ${name} to ${target}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  return {
+    schemaVersion: VERSION,
+    artifactKind: 'skill-export',
+    name,
+    source,
+    target,
+    files: await listRelativeFiles(source),
+  };
+}
+
+function writeSkillList(
+  options: Options,
+  skills: readonly SkillInfo[],
+  stdout: NodeJS.WritableStream,
+): void {
+  const payload = {
+    schemaVersion: VERSION,
+    artifactKind: 'skill-list',
+    skills,
+  };
+  if (options.json) {
+    stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+    return;
+  }
+  stdout.write(
+    `SKILLS     ${skills.length}\n${skills
+      .map((skill) => `- ${skill.name}: ${skill.description}`)
+      .join('\n')}\n`,
+  );
+}
+
+function writeSkillExport(
+  options: Options,
+  result: SkillExportResult,
+  stdout: NodeJS.WritableStream,
+): void {
+  if (options.json) {
+    stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    return;
+  }
+  stdout.write(
+    `EXPORTED   ${result.name}\nTARGET     ${result.target}\nFILES      ${result.files.length}\n`,
+  );
+}
+
+function skillsRoot(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), '..', 'skills');
+}
+
+async function listRelativeFiles(root: string): Promise<readonly string[]> {
+  const files: string[] = [];
+  await collectFiles(root, root, files);
+  return files.sort();
+}
+
+async function collectFiles(
+  root: string,
+  current: string,
+  files: string[],
+): Promise<void> {
+  for (const entry of await readdir(current, { withFileTypes: true })) {
+    const absolute = join(current, entry.name);
+    if (entry.isDirectory()) {
+      await collectFiles(root, absolute, files);
+    } else if (entry.isFile()) {
+      files.push(relative(root, absolute).replaceAll('\\', '/'));
+    }
+  }
+}
+
+function isMissingPathError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'ENOENT'
+  );
+}
+
 function renderHuman(brief: Record<string, unknown>): string {
   const coverage = String(brief.coverage);
   const receiver = isRecord(brief.receiver) ? brief.receiver : {};
@@ -1394,6 +1659,8 @@ Usage:
   specport spec check <SPEC.md> [--json] [--write REPORT]
   specport spec discover [path] [--out SPEC.md] [--json] [--force]
   specport spec validate [contract.json] [--json]
+  specport skill list [--json]
+  specport skill export <name> --out <directory> [--json] [--force]
   specport create <input> ...  (alias)
   specport check <SPEC.md> ... (alias)
   specport map [path] ...       (alias of spec discover)
@@ -1404,6 +1671,8 @@ Spec workflows:
   spec check       check a spec for implementability and explicit human decisions
   spec discover    generate a grounded repository baseline; it is a draft, not intent
   spec validate    validate a human-owned product contract before implementation
+  skill list       list the packaged agent playbooks
+  skill export     copy one playbook to a host agent's skill directory
 
 Options:
   --receiver githuman       compare with an existing local GitHuman review

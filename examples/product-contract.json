@@ -3,6 +3,11 @@
   "kind": "product-contract",
   "id": "example-product",
   "title": "Example product contract",
+  "provenance": {
+    "source": "Human-authored example maintained with SpecPort",
+    "license": "MIT",
+    "owner": "The product maintainer"
+  },
   "intent": {
     "owner": "The person who makes the ship decision",
     "userJob": "A named user completes a concrete job",
@@ -47,6 +52,10 @@
   "release": {
     "target": "The actual artifact or deployment target",
     "version": "0.1.0",
+    "compatibility": "Node.js 20 or newer; documented platform boundaries apply",
+    "security": "No secrets in the artifact; declared data and permission boundaries are reviewed",
+    "observability": "Release checks and user-visible failure states are recorded",
+    "shipAuthority": "The named product owner",
     "readiness": [
       "Build and quality checks pass",
       "The exact release artifact works in a clean consumer",

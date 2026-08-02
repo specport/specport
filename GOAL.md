@@ -180,7 +180,7 @@ The target command surface is:
 | specport cover <spec> | Implement a spec for a target repo or stack |
 | specport remix <spec> | Fork/adapt a spec while preserving lineage |
 | specport build <spec> | Run or hand off a bounded implementation workflow |
-| specport skill <install or export> | Install or export native AI operating instructions |
+| specport skill list/export | List or export native AI operating instructions |
 | specport search <query> | Search local or future public spec indexes |
 
 Commands should have concise human output and stable JSON output for agents,
@@ -262,11 +262,16 @@ npx --yes @specport/specport@latest spec discover . --write SPEC.md
 
 # Current grounded mapping alias; AST/evidence mapping remains a later phase:
 specport map . --out SPEC.md
+
+# Install a packaged playbook into a host agent's native skill directory:
+specport skill list
+specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
 ~~~
 
-The create, check, discover, validate, and map-alias commands are implemented
-and tested in the current foundation. Pull, AST-specific mapping, cover, remix,
-build, skill export, search, and public discovery remain roadmap work.
+The create, check, discover, validate, map-alias, skill list, and skill export
+commands are implemented and tested in the current foundation. Pull,
+AST-specific mapping, cover, remix, build, search, and public discovery remain
+roadmap work.
 
 ## Phased roadmap
 
@@ -284,13 +289,15 @@ The current codebase is already an early spec foundation:
 - spec map is currently an explicit alias for grounded repository discovery;
 - the repository includes native skills for repository-to-spec and
   spec-to-production workflows;
+- skill list/export exposes those packaged playbooks to a host agent without
+  silently overwriting an existing skill directory;
 - coverage compares the final Git-visible tree with an explicit review
   receiver or expected scope and reports complete, partial, or unknown.
 
 These are valuable foundations and evidence adapters, but they are not yet the
 full product described here. The current code does not yet provide GitHub spec
 pull/build, full AST mapping, lineage-aware cover/remix, a general build
-engine, skill export, public discovery, or ratings.
+engine, public discovery, or ratings.
 
 Keep current commands and artifacts honest. Do not describe unbuilt lifecycle
 commands as if they already ship, and do not let the coverage adapter become
@@ -320,7 +327,8 @@ and unknown behavior visible in the generated spec.
 ### Phase 4: cover, remix, and AI skills
 
 Add lineage-aware cover/remix operations, target compatibility profiles,
-deviation reports, and native skills for Claude, Codex, and other agents.
+deviation reports, and additional native skills for Claude, Codex, and other
+agents.
 Validate the same spec through at least two agent runtimes or a runtime-neutral
 dry-run protocol before claiming vendor portability.
 
@@ -345,7 +353,8 @@ Each phase must be demonstrated with a real fixture and a readable artifact:
 - an AI skill can perform the workflow in a bounded test repository and return
   structured results without silently expanding scope;
 - the exact npm package installs in a clean consumer and supports both human
-  output and stable machine-readable output;
+  output and stable machine-readable output, including native skill listing and
+  export;
 - ratings and public sharing are not called successful until real specs have
   repeated pull, cover, remix, and build activity. Once the signals are
   trustworthy, high-rated specs can be surfaced and shared with their evidence

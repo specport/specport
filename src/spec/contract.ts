@@ -45,6 +45,13 @@ export function validateProductContract(
   requireNonEmptyString(root, 'id', '$', issues);
   requireNonEmptyString(root, 'title', '$', issues);
 
+  const provenance = recordAt(root.provenance, '$.provenance', issues);
+  if (provenance) {
+    requireNonEmptyString(provenance, 'source', '$.provenance', issues);
+    requireNonEmptyString(provenance, 'license', '$.provenance', issues);
+    requireNonEmptyString(provenance, 'owner', '$.provenance', issues);
+  }
+
   const intent = recordAt(root.intent, '$.intent', issues);
   if (intent) {
     requireNonEmptyString(intent, 'owner', '$.intent', issues);
@@ -134,8 +141,12 @@ function validateRelease(
   if (!release) return;
   requireNonEmptyString(release, 'target', '$.release', issues);
   requireNonEmptyString(release, 'version', '$.release', issues);
+  requireNonEmptyString(release, 'compatibility', '$.release', issues);
+  requireNonEmptyString(release, 'security', '$.release', issues);
+  requireNonEmptyString(release, 'observability', '$.release', issues);
+  requireNonEmptyString(release, 'shipAuthority', '$.release', issues);
   requireNonEmptyStringArray(release, 'readiness', '$.release', issues);
-  validateOptionalStringArray(release, 'rollback', '$.release', issues);
+  requireNonEmptyStringArray(release, 'rollback', '$.release', issues);
 }
 
 function validateOptionalStringArray(

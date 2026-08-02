@@ -58,6 +58,9 @@ describe('SpecPort contract workflow', () => {
     expect(
       result.issues.some((issue) => issue.path === '$.contractVersion'),
     ).toBe(true);
+    expect(result.issues.some((issue) => issue.path === '$.provenance')).toBe(
+      true,
+    );
     expect(
       result.issues.some((issue) => issue.path === '$.intent.outcome'),
     ).toBe(true);
@@ -66,6 +69,9 @@ describe('SpecPort contract workflow', () => {
     );
     expect(
       result.issues.some((issue) => issue.path === '$.taste.reviewer'),
+    ).toBe(true);
+    expect(
+      result.issues.some((issue) => issue.path === '$.release.compatibility'),
     ).toBe(true);
   });
 

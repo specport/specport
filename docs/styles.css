@@ -135,6 +135,8 @@ h2 { margin-bottom: 22px; font: 400 clamp(39px, 5vw, 66px)/.98 var(--display); l
 .skills-intro h2 { margin-bottom: 23px; }
 .skills-intro h2 span { color: var(--signal); }
 .skills-intro p { max-width: 530px; color: #a5a49b; font-size: 17px; }
+.skills-command { margin-top: 22px; color: var(--signal) !important; font: 12px/1.6 var(--mono) !important; }
+.skills-command code { color: var(--white); }
 .skill-stack { grid-column: 2; display: grid; gap: 11px; margin-top: 54px; }
 .skill-card { display: grid; grid-template-columns: 110px 1fr 35px; gap: 18px; align-items: center; padding: 23px 22px; border: 1px solid #47463f; transition: border-color .2s ease, background .2s ease; }
 .skill-card:hover { border-color: var(--signal); background: #191915; }

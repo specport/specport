@@ -48,6 +48,8 @@ describe('SpecPort CLI contract', () => {
     expect(result.stdout).toContain('specport create');
     expect(result.stdout).toContain('specport check');
     expect(result.stdout).toContain('specport map');
+    expect(result.stdout).toContain('specport skill list');
+    expect(result.stdout).toContain('specport skill export');
     expect(result.stdout).toContain('specport spec discover');
     expect(result.stdout).toContain('specport spec validate');
   });
@@ -91,6 +93,11 @@ describe('SpecPort CLI contract', () => {
         kind: 'product-contract',
         id: 'fixture',
         title: 'Fixture contract',
+        provenance: {
+          source: 'test fixture',
+          license: 'MIT',
+          owner: 'owner',
+        },
         intent: {
           owner: 'owner',
           userJob: 'job',
@@ -103,7 +110,16 @@ describe('SpecPort CLI contract', () => {
           { id: 'V-1', command: 'npm test', purpose: 'regression' },
         ],
         taste: { required: true, reviewer: 'owner', rubric: ['clear'] },
-        release: { target: 'fixture', version: '1.0.0', readiness: ['works'] },
+        release: {
+          target: 'fixture',
+          version: '1.0.0',
+          compatibility: 'Node 20+',
+          security: 'No secrets in artifact',
+          observability: 'Logs and failures are documented',
+          shipAuthority: 'owner',
+          readiness: ['works'],
+          rollback: ['previous version'],
+        },
       }),
       'utf8',
     );
@@ -173,6 +189,55 @@ describe('SpecPort CLI contract', () => {
     const checked = await invoke(['check', acceptedPath, '--json']);
     expect(checked.code).toBe(0);
     expect(parseJson(checked).readiness).toBe('ready');
+  });
+
+  it('lists packaged skills and exports one without overwriting by default', async () => {
+    const listed = await invoke(['skill', 'list', '--json']);
+    const listBrief = parseJson(listed);
+    expect(listed.code).toBe(0);
+    expect(listBrief.artifactKind).toBe('skill-list');
+    expect(listBrief.skills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'specport-repo-to-spec' }),
+        expect.objectContaining({ name: 'specport-spec-to-production' }),
+      ]),
+    );
+
+    const directory = await mkdtemp(join(tmpdir(), 'specport-skill-'));
+    temporaryPaths.push(directory);
+    const target = join(directory, 'repo-to-spec');
+    const exported = await invoke([
+      'skill',
+      'export',
+      'specport-repo-to-spec',
+      '--out',
+      target,
+      '--json',
+    ]);
+    const exportBrief = parseJson(exported);
+    expect(exported.code).toBe(0);
+    expect(exportBrief.artifactKind).toBe('skill-export');
+    expect(exportBrief.files).toEqual(
+      expect.arrayContaining([
+        'SKILL.md',
+        'agents/openai.yaml',
+        'references/evidence-ledger.template.json',
+      ]),
+    );
+    expect(await readFile(join(target, 'SKILL.md'), 'utf8')).toContain(
+      'repo-to-spec',
+    );
+
+    const refused = await invoke([
+      'skill',
+      'export',
+      'specport-repo-to-spec',
+      '--out',
+      target,
+      '--json',
+    ]);
+    expect(refused.code).toBe(4);
+    expect(refused.stderr).toContain('Refusing to overwrite');
   });
 
   it('returns an inventory-only JSON diagnostic with no receiver and exit 0', async () => {

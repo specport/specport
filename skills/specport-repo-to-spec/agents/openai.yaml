@@ -1,0 +1,6 @@
+interface:
+  display_name: "Repository to Spec"
+  short_description: "Create a grounded spec and evidence handoff"
+  default_prompt: "Use $specport-repo-to-spec to map this repository into SPEC.md, evidence artifacts, and a human-gated handoff."
+policy:
+  allow_implicit_invocation: true
