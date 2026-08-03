@@ -5,268 +5,362 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="SpecPort binds AI-assisted changes to evidence, contracts, human taste, and a real ship decision."
+      content="SpecPort is a local deterministic CLI that proves the final Git-visible tree before merge."
     />
-    <meta name="theme-color" content="#11110f" />
-    <meta property="og:title" content="SpecPort — from done to shippable" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <meta property="og:title" content="SpecPort — prove the final tree before merge" />
     <meta
       property="og:description"
-      content="Catch review gaps before merge."
+      content="A local deterministic CLI for final-tree review coverage, grounded specs, and human-owned release evidence."
     />
     <meta property="og:type" content="website" />
-    <title>SpecPort — from done to shippable</title>
-    <link rel="icon" href="data:," />
+    <meta property="og:image" content="https://stancsz.github.io/specport/og-image.svg" />
+    <title>SpecPort — prove the final tree before merge</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="grain" aria-hidden="true"></div>
-    <header class="site-header shell">
-      <a class="wordmark" href="#top" aria-label="SpecPort home">
-        <span class="wordmark-mark">SP</span>
-        <span>specport</span>
-      </a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#how-it-works">How it works</a>
-        <a href="#skills">Skills</a>
-        <a href="#install">Install</a>
-        <a class="nav-github" href="https://github.com/stancsz/specport">
-          GitHub <span aria-hidden="true">↗</span>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <div class="header-shell">
+        <a class="brand" href="#overview" aria-label="SpecPort home">
+          <span class="brand-mark">SP</span>
+          <span class="brand-name">specport</span>
+          <span class="brand-context">LOCAL CLI / SPEC LIFECYCLE</span>
         </a>
-      </nav>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <a href="#overview">Overview</a>
+          <a href="#install">Install</a>
+          <a href="#commands">Commands</a>
+          <a href="#docs">Docs</a>
+          <a href="https://github.com/stancsz/specport/tree/main/skills">Skills <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/tree/main/examples">Examples <span aria-hidden="true">↗</span></a>
+          <a href="#release">Release</a>
+          <a href="#privacy">Privacy</a>
+          <a href="https://github.com/stancsz/specport">GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+
+        <div class="header-status" aria-label="Package publication status">
+          <span class="status-dot status-dot-warning" aria-hidden="true"></span>
+          <span data-release-status>NOT-PUBLISHED</span>
+        </div>
+      </div>
     </header>
 
-    <main id="top">
-      <section class="hero shell">
+    <main id="main-content">
+      <div class="release-banner" role="status">
+        <div class="release-banner-inner">
+          <span class="release-banner-label">RELEASE CANDIDATE</span>
+          <span>v<span data-release-version>pending</span> · MIT · Node ≥20</span>
+          <span class="release-divider" aria-hidden="true"></span>
+          <span>npm publication is checked, not assumed</span>
+        </div>
+        <a href="#release">View release truth <span aria-hidden="true">→</span></a>
+      </div>
+
+      <section class="hero section-shell" id="overview">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="pulse"></span> local · deterministic · contract-bound</div>
-          <h1>Prove the final tree before <em>merge</em>.</h1>
+          <p class="eyebrow"><span class="eyebrow-rule" aria-hidden="true"></span> FINAL-TREE REVIEW COVERAGE</p>
+          <h1>Prove the final tree <em>before merge.</em></h1>
           <p class="hero-lede">
-            SpecPort reads the final Git-visible tree and binds it to the review
-            source that actually matters. Contracts and lifecycle artifacts make
-            the next implementation step explicit without impersonating a ship
-            decision.
+            SpecPort is a local deterministic CLI that proves your final
+            Git-visible tree matches a review source or approved scope before
+            someone ships it.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#install">Install the CLI <span>↓</span></a>
-            <a class="button button-quiet" href="#contract">Read the contract <span>↘</span></a>
+            <a class="button button-primary" href="#install">Install from source <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="#commands">See the commands <span aria-hidden="true">→</span></a>
           </div>
-          <div class="hero-note">
-            <span class="note-line"></span>
-            <span>No hook. No transcript. No hosted account.</span>
-          </div>
-        </div>
-        <div class="hero-terminal" aria-label="SpecPort terminal example">
-          <div class="terminal-topbar">
-            <span class="terminal-dots"><i></i><i></i><i></i></span>
-            <span class="terminal-label">review-preflight</span>
-            <span class="terminal-state">LOCAL</span>
-          </div>
-          <div class="terminal-body">
-            <div class="terminal-command"><span class="prompt">$</span> specport coverage --receiver githuman --review rv_418</div>
-            <div class="terminal-rule"></div>
-            <div class="terminal-row"><span>RECEIVER</span><b>githuman / rv_418</b></div>
-            <div class="terminal-row"><span>FINAL TREE</span><b>14 paths · stable</b></div>
-            <div class="terminal-row"><span>COVERAGE</span><b class="signal">partial</b></div>
-            <div class="terminal-row"><span>UNREVIEWED</span><b class="alert">docs/release.md</b></div>
-            <div class="terminal-rule"></div>
-            <div class="terminal-result"><span class="result-mark">!</span><span>one review-scoped finding<br /><strong>approval stays human</strong></span></div>
+          <div class="hero-facts" aria-label="Product facts">
+            <span>LOCAL-FIRST</span>
+            <span>MODEL-NEUTRAL</span>
+            <span>HUMAN-OWNED SHIP DECISION</span>
           </div>
         </div>
+
+        <aside class="package-card" aria-labelledby="package-title">
+          <div class="card-topline">
+            <span>PACKAGE IDENTITY</span>
+            <span class="status-label status-label-warning"><span class="status-dot" aria-hidden="true"></span><span data-release-status>NOT-PUBLISHED</span></span>
+          </div>
+          <h2 id="package-title"><span class="package-scope">@specport/</span>specport</h2>
+          <p class="package-summary">Deterministic final-tree review coverage and contract scaffolding for AI-assisted code changes.</p>
+          <div class="package-facts">
+            <div><span>VERSION</span><strong>v<span data-release-version>pending</span></strong></div>
+            <div><span>LICENSE</span><strong>MIT</strong></div>
+            <div><span>RUNTIME</span><strong>Node ≥20</strong></div>
+            <div><span>BIN</span><strong>specport</strong></div>
+          </div>
+          <div class="package-note">
+            <span class="note-mark" aria-hidden="true">!</span>
+            <p data-package-note>Public npm install stays withheld until the registry and tarball are verified. Use the source path below today.</p>
+          </div>
+          <a class="text-link" href="#release">Inspect the release receipt <span aria-hidden="true">↗</span></a>
+        </aside>
       </section>
 
-      <section class="signal-strip">
-        <div class="shell strip-grid">
-          <div><strong>01</strong><span>Observe the whole tree</span></div>
-          <div><strong>02</strong><span>Bind to a real receiver</span></div>
-          <div><strong>03</strong><span>Prove what can be proven</span></div>
-          <div><strong>04</strong><span>Let a human ship</span></div>
+      <nav class="action-rail" aria-label="SpecPort quick actions">
+        <div class="action-rail-inner">
+          <a href="#install"><span class="rail-index">01</span><strong>Install source</strong><small>verified path today</small></a>
+          <a href="#commands"><span class="rail-index">02</span><strong>Run coverage</strong><small>the first useful job</small></a>
+          <a href="https://github.com/stancsz/specport/blob/main/examples/product-contract.json"><span class="rail-index">03</span><strong>Read the contract <span aria-hidden="true">↗</span></strong><small>machine-readable example</small></a>
+          <a href="#release"><span class="rail-index">04</span><strong>Check release</strong><small>status, version, evidence</small></a>
         </div>
-      </section>
+      </nav>
 
-      <section class="section shell intro-grid" id="contract">
-        <div class="section-kicker">01 / The premise</div>
-        <div>
-          <h2>A green test suite is not a ship decision.</h2>
-          <p class="section-lede">
-            AI-assisted changes often arrive after the session is gone, with a
-            summary that sounds complete and a working tree nobody has bounded.
-            SpecPort makes the final-state relation explicit without becoming
-            another reviewer, recorder, or control plane.
-          </p>
-          <div class="quote-block">
-            <span class="quote-mark">“</span>
-            <p>Show the observed patch, not the agent’s story.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section shell layers" id="how-it-works">
-        <div class="section-kicker">02 / Three truths</div>
-        <div class="layer-grid">
-          <article class="layer-card layer-evidence">
-            <div class="card-number">A / 01</div>
-            <h3>Evidence</h3>
-            <p>
-              What the repository, Git state, checks, receiver source, and
-              release artifact actually show.
-            </p>
-            <div class="card-detail"><span>machine-owned</span><span>exact</span></div>
-          </article>
-          <article class="layer-card layer-contract">
-            <div class="card-number">B / 02</div>
-            <h3>Contract</h3>
-            <p>
-              What a named owner says the product must do, must not do, and how
-              a reviewer can tell that it is true.
-            </p>
-            <div class="card-detail"><span>human-owned</span><span>bounded</span></div>
-          </article>
-          <article class="layer-card layer-taste">
-            <div class="card-number">C / 03</div>
-            <h3>Taste</h3>
-            <p>
-              What a human experiences in the real medium: interaction, visual
-              quality, audio, writing, or operational confidence.
-            </p>
-            <div class="card-detail"><span>human-reviewed</span><span>felt</span></div>
-          </article>
-        </div>
-        <div class="layer-footnote">
-          <span class="footnote-mark">↳</span>
-          <span>Automation reports facts. It does not impersonate approval.</span>
-        </div>
-      </section>
-
-      <section class="section section-dark" id="skills">
-        <div class="shell skills-layout">
-          <div class="section-kicker">03 / The agent layer</div>
-          <div class="skills-intro">
-            <h2>Specs are not vibe fuel.<br /><span>They are a binding surface.</span></h2>
-            <p>
-              Give an agent the smallest sufficient context, then require it to
-              leave the project more evidenced than it found it.
-            </p>
-            <p class="skills-command"><code>specport skill list</code> exposes the packaged playbooks; <code>skill export</code> copies one to a host agent without silently overwriting it.</p>
-          </div>
-          <div class="skill-stack">
-            <article class="skill-card">
-              <div class="skill-index">SKILL / 01</div>
-              <div class="skill-content">
-                <h3>Repository → spec</h3>
-                <p>Ground an existing codebase into a draft without mistaking implementation for intent.</p>
-                <a href="https://github.com/stancsz/specport/blob/main/skills/specport-repo-to-spec/SKILL.md">Read the playbook <span>↗</span></a>
-              </div>
-              <div class="skill-arrow">→</div>
-            </article>
-            <article class="skill-card">
-              <div class="skill-index">SKILL / 02</div>
-              <div class="skill-content">
-                <h3>Spec → production</h3>
-                <p>Execute accepted criteria through implementation, checks, taste, artifact smoke, and rollback.</p>
-                <a href="https://github.com/stancsz/specport/blob/main/skills/specport-spec-to-production/SKILL.md">Read the playbook <span>↗</span></a>
-              </div>
-              <div class="skill-arrow">→</div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section shell workflow">
-        <div class="section-kicker">04 / The loop</div>
-        <div class="workflow-head">
-          <h2>From repository evidence<br /><em>to a real ship.</em></h2>
-          <p>Every arrow has an owner. Every gate has a different kind of proof.</p>
-        </div>
-        <div class="workflow-line" role="list" aria-label="SpecPort product lifecycle">
-          <div class="workflow-step" role="listitem"><span>01</span><strong>Discover</strong><small>facts + unknowns</small></div>
-          <div class="workflow-connector" aria-hidden="true">→</div>
-          <div class="workflow-step" role="listitem"><span>02</span><strong>Accept</strong><small>intent + boundaries</small></div>
-          <div class="workflow-connector" aria-hidden="true">→</div>
-          <div class="workflow-step" role="listitem"><span>03</span><strong>Build</strong><small>vertical slices</small></div>
-          <div class="workflow-connector" aria-hidden="true">→</div>
-          <div class="workflow-step" role="listitem"><span>04</span><strong>Verify</strong><small>tree + checks</small></div>
-          <div class="workflow-connector" aria-hidden="true">→</div>
-          <div class="workflow-step workflow-final" role="listitem"><span>05</span><strong>Ship</strong><small>taste + authority</small></div>
-        </div>
-      </section>
-
-      <section class="section shell product-state">
-        <div class="section-kicker">05 / What is real today</div>
-        <div class="state-head">
-          <h2>A small tool with a serious boundary.</h2>
-          <p>
-            The receiver-first wedge is the current product. The contract layer
-            now includes deterministic draft authoring, readiness checks, a
-            bounded repository map, a one-command repo-to-spec packet, a
-            reproducibility lock and drift gate, a provenance-preserving GitHub
-            pull, lineage-aware lifecycle handoffs, and an identity-bound merge
-            guard, while staying honest
-            about what still needs a human.
+      <section class="section-shell section-block install-block" id="install">
+        <div class="section-heading">
+          <p class="section-kicker">01 / QUICK START</p>
+          <h2>Start with the source you can verify.</h2>
+          <p data-install-summary>
+            The public package is not verified yet. This path uses the repository,
+            runs the package gate, and leaves you with the same local executable.
           </p>
         </div>
-        <div class="state-table" role="table" aria-label="SpecPort capabilities">
-          <div class="state-row state-header" role="row"><span role="columnheader">Surface</span><span role="columnheader">What it does</span><span role="columnheader">Status</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>coverage</code></span><span role="cell">Compares the final Git-visible tree with a real receiver or approved scope.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec discover</code></span><span role="cell">Generates a grounded repository baseline and exposes unresolved contract fields.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec bundle</code></span><span role="cell">Writes SPEC.md, baseline, bounded map, evidence ledger, spec-check, and content-hashed packet manifest in one read-only pass.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec lock / drift</code></span><span role="cell">Records reproducibility fingerprints and fails closed when the spec, supporting artifacts, or final source tree changes.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec guard</code></span><span role="cell">Binds final-tree coverage, contract acceptance, verification, taste, and candidate-lock evidence into a merge-ready receipt; it does not ship.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec validate</code></span><span role="cell">Checks the shape of a human-owned product contract before implementation.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>pull</code></span><span role="cell">Fetches one spec from a repository with a declared license at a resolved GitHub commit and records provenance without executing repository code.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>create / check</code></span><span role="cell">Preserves rough input as a draft, then checks provenance, criteria, verification, taste, release, and acceptance.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec map</code></span><span role="cell">Produces a bounded static implementation map with file roles, simple symbols, local edges, surfaces, and explicit unknowns. No repository code runs.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec cover</code></span><span role="cell">Builds a lineage, license, contract, and target-assessment plan; ready means handoff-ready, not code-complete.</span><span role="cell" class="status-human">bounded handoff</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec remix</code></span><span role="cell">Preserves the parent digest and attribution boundary while recording an explicit change set.</span><span role="cell" class="status-human">draft + human gate</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>spec build</code></span><span role="cell">Produces a bounded implementation handoff after contract acceptance; it does not generate or run code.</span><span role="cell" class="status-human">human gate</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>skill list / export</code></span><span role="cell">Lists and copies the packaged agent playbooks without silently overwriting a host skill directory.</span><span role="cell" class="status-live">shipping</span></div>
-          <div class="state-row" role="row"><span role="cell"><code>taste</code></span><span role="cell">Names the human review that automation cannot provide.</span><span role="cell" class="status-human">human gate</span></div>
-        </div>
-      </section>
 
-      <section class="section install-section" id="install">
-        <div class="shell install-grid">
-          <div class="section-kicker">06 / Start here</div>
-          <div class="install-copy">
-            <h2>One command to see what is actually in the room.</h2>
-            <p>Local by default. Installable in seconds. Useful before the review is over. Use <code>specport spec bundle .</code> for the complete draft packet.</p>
+        <div class="install-grid">
+          <div class="code-card">
+            <div class="code-card-head">
+              <span>SOURCE INSTALL / AVAILABLE NOW</span>
+              <button class="copy-button" type="button" data-copy="git clone https://github.com/stancsz/specport.git&#10;cd specport&#10;npm ci&#10;npm run verify:package&#10;node dist/cli.js coverage">copy</button>
+            </div>
+            <pre><code><span class="code-muted">$</span> git clone https://github.com/stancsz/specport.git
+<span class="code-muted">$</span> cd specport
+<span class="code-muted">$</span> npm ci
+<span class="code-muted">$</span> npm run verify:package
+<span class="code-muted">$</span> node dist/cli.js coverage</code></pre>
+            <div class="code-card-foot"><span class="live-marker" aria-hidden="true"></span> local / no hosted account / no source upload</div>
           </div>
-          <div class="code-panel">
-            <div class="code-panel-top"><span>TERMINAL</span><button class="copy-button" type="button" data-copy="npm install --save-dev @specport/specport">copy</button></div>
+
+          <div class="code-card code-card-muted" data-published-path-card aria-label="Npm install path not yet available">
+            <div class="code-card-head">
+              <span data-published-path-label>PUBLISHED PATH / NOT AVAILABLE YET</span>
+              <span class="status-label status-label-muted" data-published-path-status>PENDING</span>
+              <button class="copy-button" type="button" data-copy="npm install --save-dev @specport/specport&#10;npx --no-install specport coverage">copy</button>
+            </div>
             <pre><code><span class="code-muted">$</span> npm install --save-dev @specport/specport
+<span class="code-muted">$</span> npx --no-install specport coverage</code></pre>
+            <p class="code-card-message" data-published-path-message>This exact command becomes the primary install path after npm publication is verified.</p>
+          </div>
+        </div>
 
-<span class="code-muted">$</span> specport coverage
-<span class="code-signal">VERDICT</span>    inventory-only
-<span class="code-signal">COVERAGE</span>   unknown
-<span class="code-muted">NEXT</span>       provide a receiver or approved scope</code></pre>
+        <div class="install-proof">
+          <div class="proof-icon" aria-hidden="true">↳</div>
+          <div>
+            <strong>What the first command proves</strong>
+            <p>coverage inspects the final Git-visible tree. An inventory-only or unknown result is useful evidence, not a ship approval.</p>
           </div>
-          <div class="install-links">
-            <a href="https://www.npmjs.com/package/@specport/specport">npm package <span>↗</span></a>
-            <a href="https://github.com/stancsz/specport">source on GitHub <span>↗</span></a>
-            <a href="https://github.com/stancsz/specport/blob/main/examples/product-contract.json">contract example <span>↗</span></a>
-          </div>
+          <a class="text-link" href="https://github.com/stancsz/specport#the-first-minute-workflow">Read the first-minute workflow <span aria-hidden="true">↗</span></a>
         </div>
       </section>
 
-      <section class="section shell honesty">
-        <div class="honesty-mark">!</div>
-        <div>
-          <div class="section-kicker">07 / The honest part</div>
-          <h2>Not an AI reviewer.<br />Not a magic compiler.</h2>
-          <p>
-            SpecPort does not infer behavior from hashes, replace tests, or turn
-            a generated paragraph into a ship decision. It makes the boundary
-            between evidence, contract, taste, and authority visible enough for
-            an existing review system to use.
-          </p>
+      <section class="section-shell section-block commands-block" id="commands">
+        <div class="section-heading section-heading-row">
+          <div>
+            <p class="section-kicker">02 / COMMAND SURFACE</p>
+            <h2>The parts you can run today.</h2>
+          </div>
+          <p class="section-heading-aside">Each surface states its boundary. A merge-ready receipt is not a ship decision.</p>
+        </div>
+
+        <div class="command-grid">
+          <article class="command-card command-card-featured">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">01</span></div>
+            <h3><code>coverage</code></h3>
+            <p>Compare the final Git-visible tree with a receiver or approved scope.</p>
+            <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">02</span></div>
+            <h3><code>spec bundle</code></h3>
+            <p>Write a grounded SPEC.md, baseline, bounded map, ledger, checks, and packet manifest.</p>
+            <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">03</span></div>
+            <h3><code>spec lock / drift</code></h3>
+            <p>Record reproducibility fingerprints and hold when the spec or source tree changes.</p>
+            <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card command-card-dark">
+            <div class="command-card-top"><span class="status-label status-label-accent">HUMAN GATE</span><span class="command-index">04</span></div>
+            <h3><code>spec guard</code></h3>
+            <p>Bind coverage, contract acceptance, verification, taste, and lock evidence before merge.</p>
+            <a href="https://github.com/stancsz/specport#guard-one-candidate-before-merge">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">05</span></div>
+            <h3><code>create / check</code></h3>
+            <p>Preserve rough input as a draft, then expose missing decisions and readiness gaps.</p>
+            <a href="https://github.com/stancsz/specport#specs-that-are-evidence-contracts-and-taste">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">06</span></div>
+            <h3><code>pull / map</code></h3>
+            <p>Fetch one exact GitHub spec or map a repository without executing its code.</p>
+            <a href="https://github.com/stancsz/specport#readme">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">07</span></div>
+            <h3><code>spec discover / validate</code></h3>
+            <p>Find the nearest contract surface and check whether a spec is complete enough to use.</p>
+            <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card">
+            <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">08</span></div>
+            <h3><code>skill list / export</code></h3>
+            <p>Inspect the included agent playbooks and export a verified skill bundle for local use.</p>
+            <a href="https://github.com/stancsz/specport/tree/main/skills">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="command-card command-card-dark">
+            <div class="command-card-top"><span class="status-label status-label-accent">HUMAN GATE</span><span class="command-index">09</span></div>
+            <h3><code>cover / remix / build</code></h3>
+            <p>Carry a bounded contract into a new implementation plan without erasing lineage or judgment.</p>
+            <a href="https://github.com/stancsz/specport#cover-remix-and-build-handoffs">Read usage <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+
+        <div class="command-footer">
+          <span>Need the complete surface?</span>
+          <a class="text-link" href="https://github.com/stancsz/specport#output-and-exit-codes">View commands and exit codes <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="section-shell section-block docs-block" id="docs">
+        <div class="section-heading">
+          <p class="section-kicker">03 / DOCUMENTATION</p>
+          <h2>Everything needed to inspect the claim.</h2>
+          <p>Real repository artifacts, direct links, and no invented third-party surface.</p>
+        </div>
+
+        <div class="docs-grid">
+          <a class="doc-card doc-card-blue" href="https://github.com/stancsz/specport#readme">
+            <span class="doc-card-label">README / START HERE</span>
+            <h3>Install, first minute, and boundaries</h3>
+            <span class="doc-card-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="doc-card" href="https://github.com/stancsz/specport/tree/main/skills">
+            <span class="doc-card-label">SKILLS / AGENT PLAYBOOKS</span>
+            <h3>Repository → spec and spec → production</h3>
+            <span class="doc-card-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="doc-card" href="https://github.com/stancsz/specport/tree/main/schemas">
+            <span class="doc-card-label">SCHEMAS + EXAMPLES</span>
+            <h3>Machine-readable contracts and fixtures</h3>
+            <span class="doc-card-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="doc-card" href="https://github.com/stancsz/specport/blob/main/CHANGELOG.md">
+            <span class="doc-card-label">RELEASE HISTORY</span>
+            <h3>Changelog, release, security, contribution</h3>
+            <span class="doc-card-arrow" aria-hidden="true">↗</span>
+          </a>
+        </div>
+
+        <div class="docs-links">
+          <a href="https://github.com/stancsz/specport/blob/main/CONTRIBUTING.md">Contributing <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/blob/main/SECURITY.md">Security <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/blob/main/LICENSE">MIT license <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/blob/main/examples/product-contract.json">Contract example <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/blob/main/skills/specport-repo-to-spec/SKILL.md">Repository skill <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/stancsz/specport/issues">Issues <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="section-shell section-block status-block" id="status">
+        <div class="section-heading section-heading-row">
+          <div>
+            <p class="section-kicker">04 / WHAT IS REAL</p>
+            <h2>Current surface, plainly labeled.</h2>
+          </div>
+          <p class="section-heading-aside">The status is part of the product contract.</p>
+        </div>
+
+        <div class="surface-table" role="table" aria-label="SpecPort capability status">
+          <div class="surface-row surface-header" role="row"><span role="columnheader">Surface</span><span role="columnheader">What it does</span><span role="columnheader">State</span></div>
+          <div class="surface-row" role="row"><code role="cell">coverage</code><span role="cell">Final-tree coverage against an explicit receiver or approved scope.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec bundle</code><span role="cell">One read-only repo-to-spec packet with evidence and unknowns.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec guard</code><span role="cell">Identity-bound merge-ready receipt; never a ship approval.</span><span role="cell" class="state state-human">human gate</span></div>
+          <div class="surface-row" role="row"><code role="cell">create / validate</code><span role="cell">Draft and check a human-owned, AI-implementable contract.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">pull / map</code><span role="cell">One exact licensed pull and bounded static repository map.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">cover / remix / build</code><span role="cell">Lineage-preserving plans and a human-gated implementation handoff.</span><span role="cell" class="state state-human">bounded handoff</span></div>
+          <div class="surface-row" role="row"><code role="cell">public index / ratings</code><span role="cell">Search, sharing, reputation, and a future spec network.</span><span role="cell" class="state state-roadmap">roadmap</span></div>
+        </div>
+      </section>
+
+      <section class="section-shell section-block release-block" id="release">
+        <div class="section-heading">
+          <p class="section-kicker">05 / RELEASE TRUTH</p>
+          <h2>Publication is a fact, not a setting.</h2>
+          <p>These fields are generated from package metadata and a registry check. The page stays honest when the answer is no.</p>
+        </div>
+
+        <div class="release-grid">
+          <article class="release-card release-card-warning">
+            <span class="release-card-label">NPM REGISTRY</span>
+            <strong data-release-status>NOT-PUBLISHED</strong>
+            <p data-registry-message>Public install is withheld until the exact version and tarball are returned by npm.</p>
+            <code>npm view @specport/specport version</code>
+          </article>
+          <article class="release-card">
+            <span class="release-card-label">PACKAGE</span>
+            <strong>v<span data-release-version>pending</span></strong>
+            <p>MIT · Node ≥20 · executable: specport</p>
+            <a class="text-link" href="https://github.com/stancsz/specport/blob/main/package.json">Inspect package metadata <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="release-card">
+            <span class="release-card-label">PAGES ARTIFACT</span>
+            <strong data-pages-status>SOURCE / VERIFY AFTER DEPLOY</strong>
+            <p>Generated for commit <span data-release-commit>local checkout</span>. Fetch the deployed URL before calling it live.</p>
+            <a class="text-link" href="https://github.com/stancsz/specport/blob/main/RELEASE.md">Read release procedure <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+      </section>
+
+      <section class="trust-band" id="privacy">
+        <div class="section-shell trust-band-inner">
+          <div>
+            <p class="section-kicker">06 / LOCAL BY DEFAULT</p>
+            <h2>Evidence stays close to the project.</h2>
+            <p>SpecPort inspects locally by default. It makes the network boundary explicit instead of hiding it behind a hosted account.</p>
+          </div>
+          <div class="trust-list">
+            <div><span class="trust-number">01</span><strong>No source upload</strong><p>No source, prompts, transcripts, or credentials go to a SpecPort service.</p></div>
+            <div><span class="trust-number">02</span><strong>Explicit network</strong><p>Only a requested receiver URL or one exact GitHub ref may be contacted.</p></div>
+            <div><span class="trust-number">03</span><strong>Human authority</strong><p>Automation reports facts; people own intent, taste, and the final ship decision.</p></div>
+          </div>
+          <p class="trust-boundary"><span>NON-GOALS</span><strong>Not an AI reviewer. Not a magic compiler. Not a hosted account.</strong></p>
+        </div>
+      </section>
+
+      <section class="section-shell section-block roadmap-block" id="roadmap">
+        <div class="roadmap-mark" aria-hidden="true">→</div>
+        <div class="roadmap-copy">
+          <p class="section-kicker">07 / ROADMAP</p>
+          <h2>A public index can come later.</h2>
+          <p>Portable specs, exact discovery, cover/remix lineage, verified build evidence, and reputation are the direction. They become public surfaces after real specs are being pulled, covered, remixed, and built by external users.</p>
+          <a class="text-link" href="https://github.com/stancsz/specport/blob/main/GOAL.md">Read the full goal <span aria-hidden="true">↗</span></a>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer shell">
-      <div class="footer-brand"><span class="wordmark-mark">SP</span><span>specport</span></div>
-      <p>Catch review gaps before merge.</p>
-      <div class="footer-links"><a href="https://github.com/stancsz/specport">GitHub</a><a href="https://www.npmjs.com/package/@specport/specport">npm</a><a href="#top">Back to top ↑</a></div>
+    <footer class="site-footer">
+      <div class="footer-shell">
+        <a class="brand" href="#overview" aria-label="Back to SpecPort home">
+          <span class="brand-mark">SP</span>
+          <span class="brand-name">specport</span>
+        </a>
+        <p>Prove the final tree before merge.</p>
+        <nav aria-label="Footer navigation">
+          <a href="https://github.com/stancsz/specport">GitHub</a>
+          <a href="https://github.com/stancsz/specport/blob/main/CHANGELOG.md">Changelog</a>
+          <a href="https://www.npmjs.com/">npm</a>
+          <a href="#overview">Back to top ↑</a>
+        </nav>
+      </div>
     </footer>
+
     <script src="./app.js" defer></script>
   </body>
 </html>

@@ -24,10 +24,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      - name: Generate release metadata
+        run: node scripts/sync-site-release.mjs
+        env:
+          SPECPORT_PAGES_STATUS: "PAGES / VERIFY AFTER DEPLOY"
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3

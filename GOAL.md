@@ -1,514 +1,405 @@
 # SpecPort
 
-## Mission
+## Goal
 
-SpecPort makes software specifications portable, discoverable, implementable,
-and remixable.
+Make SpecPort’s public website the trustworthy operational front door for a
+local-first CLI and the future portable-spec network.
 
-> From messy intent to an AI-implementable spec.
->
-> From a repository to an observed spec.
->
-> From a free spec to a built capability.
+The site must feel as usable as the front doors of npm, MacPorts, and PyPI:
+someone should understand the product, identify the artifact, install or run
+it, find documentation, inspect release truth, and see what is available within
+the first minute. It may keep SpecPort’s restrained, high-contrast visual
+identity, but editorial mood must never outrank utility.
 
-The primary artifact is a versioned spec, not an agent transcript, a review
-report, or a hosted SaaS subscription. SpecPort is a local-first,
-npm-installable CLI and extensible protocol that helps a human or an AI agent
-author, understand, find, adapt, and build from specs.
+“Looks like a registry” is not the goal by itself. The goal is a site that
+behaves like a reliable software distribution entry point without pretending
+that an unpublished package, an empty index, or a roadmap feature already
+exists.
 
-The long-term product thesis is that software can be distributed like a
-recipe or blueprint: instead of buying a separate SaaS product for every
-workflow, a user can find a useful, licensed spec, cover or remix it for their
-context, and build it with the tools and AI they choose.
+## Product identity
 
-The near-term wedge is narrower and must earn the ecosystem's trust first:
-after an AI agent finishes, prove that the exact final Git-visible tree is
-covered by the review source or approved scope. This is the first repeatable
-reason to install SpecPort; the portable-spec network is a larger direction,
-not evidence of current adoption.
+SpecPort is a local, deterministic npm CLI for the moment after an AI coding
+tool or person finishes a change and before someone approves or ships it. Its
+narrow, current wedge is:
 
-That is a direction, not a claim that every generated implementation is safe,
-correct, or production-ready. SpecPort must preserve provenance, licensing,
-unknowns, verification evidence, and human ownership of the final ship
-decision.
+> AI agents make code fast; SpecPort proves the final Git-visible tree before
+> merge.
 
-## What counts as a spec
+SpecPort compares the complete final Git-visible tree with an explicit review
+source or approved scope. It can report coverage, create grounded spec drafts,
+validate human-owned contracts, preserve provenance, and produce bounded
+handoffs. It does not replace a reviewer, infer complete product intent, run
+arbitrary pulled repositories, or grant ship authority.
 
-A SpecPort spec is a portable, structured description of a capability that
-another person or AI can implement without inventing important product
-decisions. It should make these things explicit:
+The primary long-term artifact is a portable, versioned SPEC.md, not an agent
+transcript, hosted account, or proprietary model workflow. A useful spec makes
+the problem, users, outcome, constraints, behavior, acceptance criteria,
+verification, dependencies, compatibility, version, license, provenance,
+ownership, and unresolved decisions inspectable.
 
-- the problem, users, desired outcome, and success measures;
-- scope, non-goals, assumptions, and constraints;
-- behavior, workflows, interfaces, data, and important edge cases;
-- implementation guidance and stack-specific requirements where relevant;
-- acceptance criteria, checks, fixtures, and evidence expectations;
-- dependencies, compatibility, version, license, provenance, and ownership;
-- unresolved questions and decisions that still require a human.
+The broader direction is a distribution layer for useful, licensed specs:
 
-"AI-implementable" does not mean "guaranteed to produce correct software." It
-means the spec is specific enough to plan, implement, test, and review, with
-uncertainty visible instead of silently filled in by a model.
-
-The canonical human-readable artifact is SPEC.md. A machine-readable
-manifest or companion format may carry identity, version, tags, source,
-license, and build metadata. The format must remain useful without a
-SpecPort account or a particular model vendor.
-
-## The spec lifecycle
-
-SpecPort should make one coherent loop possible:
-
-~~~
-messy text -----\
-GitHub spec -----+--> inspect / normalize --> check --> cover or remix --> build
-existing repo ---/                                               |
-                                                               +--> evidence and feedback
-~~~
-
-### 1. Turn arbitrary text into a well-written spec
-
-Given notes, a problem statement, an issue dump, a document, or other
-unstructured text, SpecPort should produce a clear draft SPEC.md.
-
-The transformation must preserve source material, separate confirmed facts
-from inference, identify missing decisions, and expose contradictions. It
-should improve structure and implementability without pretending that the
-input contained requirements it did not contain.
-
-The first useful flow should be short:
-
-~~~
-rough input -> draft spec -> spec check -> human confirmation -> build handoff
-~~~
-
-### 2. Discover and pull specs from GitHub
-
-SpecPort should make good specs easy to find and safe to pull from ordinary
-GitHub repositories. The discovery contract should prefer explicit metadata
-over guesswork:
-
-| Signal | Recommended convention |
-| --- | --- |
-| One primary spec | SPEC.md at the repository root |
-| Multiple specs | specs/<spec-id>/SPEC.md or specs/<spec-id>.md |
-| Machine metadata | .specport/manifest.yml or specport.yml |
-| Repository topics | specport, spec, and domain/stack topics |
-| Optional labels | specport-ready, specport-coverable, specport-remixable |
-
-Topics and labels are discovery hints, not proof of quality. A manifest
-should declare the spec ID, version, paths, tags, compatible stacks, license,
-dependencies, and whether the spec is ready to cover or remix. The resolver
-should use a predictable order: manifest, canonical paths, then clearly
-reported metadata heuristics.
-
-Pulling a spec must preserve the exact repository, ref, commit, source path,
-license, and provenance. A pulled spec is inspected locally before a build is
-started. SpecPort must not execute arbitrary repository code merely because a
-spec was discovered.
-
-### 3. Map an existing repository into a spec
-
-SpecPort should also work in reverse: given a repository, produce a useful
-starting SPEC.md by combining AST mapping with observable repository evidence
-such as:
-
-- modules, symbols, routes, commands, data models, and dependency edges;
-- configuration, package metadata, migrations, fixtures, and tests;
-- documentation, examples, and selected Git history when requested.
-
-The reverse map must distinguish:
-
-- **observed**: directly supported by source, configuration, tests, or docs;
-- **inferred**: a reasoned interpretation that needs human confirmation;
-- **unknown**: a product decision or behavior the repository cannot establish.
-
-AST mapping describes what the code is and how it is shaped. It must not claim
-to know why the product exists, whether behavior is correct, or which
-requirements were intended unless evidence supports that claim. The output is
-a spec draft to refine, not an oracle.
-
-### 4. Cover and remix specs
-
-SpecPort should make reuse a first-class action:
-
-- **Cover a spec** means implement the same capability for a target repository,
-  language, framework, or deployment context. The result records
-  compatibility, deviations, and verification evidence against the parent
-  spec.
-- **Remix a spec** means intentionally adapt or extend it for a different
-  audience, workflow, constraint, or product direction. The result preserves
-  the parent reference, change history, attribution, license, and an explicit
-  diff of what changed.
-
-Both actions should be possible from the CLI and from an AI skill. They should
-produce ordinary files that can be reviewed, versioned, forked, and shared;
-they must not create an opaque lock-in to SpecPort.
-
-## AI-native operation
-
-SpecPort should ship native operating instructions and adapters for Claude,
-Codex, and other AI systems. An agent should be able to:
-
-- locate and load the relevant spec and its provenance;
-- draft or revise a spec while preserving unresolved decisions;
-- check whether a spec is implementable before coding;
-- cover or remix a spec with an explicit change set;
-- build against a spec in a bounded target repository;
-- run the declared checks and return structured evidence;
-- report deviations rather than quietly changing the contract.
-
-The skill layer should be installable into the host agent's native workflow
-and should not require one shared production API key or one model vendor.
-Human-owned intent, constraints, acceptance criteria, and final approval remain
-outside the agent's authority.
-
-## npm and CLI contract
-
-SpecPort must be easy for both humans and agents to install and invoke:
-
-~~~
-npm install --save-dev @specport/specport
-npx --yes @specport/specport@latest <command>
-~~~
-
-The target command surface is:
-
-| Command | Purpose |
-| --- | --- |
-| specport coverage <repo> | Compare the final Git-visible tree with a receiver or expected scope |
-| specport spec discover <repo> | Generate an observed repository-baseline draft |
-| specport spec bundle <repo> | Generate the draft SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest in one read-only pass |
-| specport spec lock <spec> | Record SPEC.md, supporting artifact, repository, and source-tree fingerprints in SPEC.lock |
-| specport spec drift <spec> | Compare the current local state with SPEC.lock and fail closed on drift or unknown state |
-| specport spec guard <repo> | Bind an exact final tree to scope, accepted contract, verification, taste, acceptance, and candidate-lock evidence before merge; it does not ship |
-| specport spec validate <contract> | Validate a human-owned product contract before implementation |
-| specport create <input> | Turn arbitrary text into a draft spec |
-| specport check <spec> | Check structure, completeness, provenance, and readiness |
-| specport pull <github-ref> | Discover and fetch a spec at an exact ref |
-| specport spec map <repo> | Generate a bounded static repository map with evidence labels and explicit unknowns |
-| specport spec cover <spec> --target <repo> --target-stack <stack> | Create a lineage, license, contract, and target-compatibility plan; it does not generate code |
-| specport spec remix <spec> --change <statement> | Create a parent-preserving remix draft with an explicit change set and attribution obligations |
-| specport spec build <spec> --target <repo> --target-stack <stack> --contract <contract.json> --acceptance-record <record.json> | Produce a human-gated implementation handoff; it does not execute or ship the build |
-| specport skill list/export | List or export native AI operating instructions |
-| specport search <query> | Search local or future public spec indexes |
-
-Commands should have concise human output and stable JSON output for agents,
-scripts, CI, and other tools. They should work locally by default, make
-network access explicit, use deterministic exit codes, and never hide
-important warnings behind a green-looking summary.
-
-The exact command names may evolve, but the verbs and the lifecycle should
-remain understandable without reading implementation code.
-
-## Extensibility
-
-SpecPort should be a small core with adapters rather than a closed monolith.
-Extension points should cover:
-
-- spec formats and validators;
-- GitHub and other source/index providers;
-- AST parsers and language/framework mappers;
-- AI runtimes and native skill formats;
-- build targets, test runners, and evidence collectors;
-- local, team, and future public registries.
-
-An extension must declare its inputs, outputs, permissions, network behavior,
-and failure modes. The core should preserve a stable spec identity and
-provenance model even when an adapter changes.
-
-## Long-term distribution vision
-
-The strategic opportunity is a new distribution layer for software
-capabilities:
-
-1. Someone publishes a useful, licensed spec.
+1. Someone publishes a useful spec.
 2. Others discover and inspect it.
-3. A builder covers it for a chosen stack or remixes it for a new context.
-4. An AI or human builds it locally.
-5. The resulting implementation reports tests, deviations, and evidence back
-   to the spec's lineage.
+3. A builder covers it for a target stack or remixes it for a new context.
+4. A human or AI builds it locally.
+5. The result reports tests, deviations, and evidence back to its lineage.
 
-This can make a free spec more valuable than a static SaaS feature because it
-is portable, inspectable, adaptable, and buildable by the user. SpecPort does
-not need to own hosting, deployment, billing, or the implementation runtime
-to enable that ecosystem.
-
-Future discovery should support ratings and reputation, but popularity alone
-must not be the quality model. Useful signals may include verified builds,
-test results, update history, maintainer responsiveness, cover/remix outcomes,
-security reports, compatibility, and human reviews. Ratings are a later
-ecosystem feature, after the spec format, provenance, and build evidence are
-real.
+That is the expansion path. It is not proof of current adoption or permission
+to market a public registry before the underlying corpus and provenance exist.
 
 ## First user and first job
 
-The first target user is an AI-native developer, founder, or maintainer who
-has either a half-formed idea or an existing codebase and wants a portable
-build brief that another human or AI can use.
+The first target user is an AI-native maintainer, founder, agency, or developer
+shipping a change in an existing repository where an unreviewed file, invented
+product decision, provenance mistake, or false sense of completion is costly.
 
 The first job is:
-
-> Turn rough intent or existing code into a trustworthy SPEC.md, identify
-> what is still unknown, and make the next implementation step obvious.
-
-The first-minute experience for the current foundation is:
-
-~~~
-npx --yes @specport/specport@latest spec bundle .
-
-# Writes SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest.
-# Exit 5 is expected until the human contract is filled and accepted.
-specport spec lock SPEC.md --out SPEC.lock
-specport spec drift SPEC.md --lock SPEC.lock --json
-
-specport spec guard . \
-  --spec SPEC.md \
-  --contract .specport/contract.json \
-  --acceptance-record .specport/evidence/contract-acceptance.json \
-  --verification .specport/evidence/verification.json \
-  --lock SPEC.lock \
-  --expected-scope .specport/evidence/approved-scope.json \
-  --json
-
-specport spec validate .specport/contract.json
-
-specport create notes.md --out SPEC.md
-specport check SPEC.md
-
-# Create a bounded implementation handoff. It requires a human-accepted contract
-# and a receipt-verified declared source license before it can be ready:
-specport spec build SPEC.md \
-  --target . \
-  --target-stack node \
-  --contract .specport/contract.json \
-  --acceptance-record .specport/contract-acceptance.json \
-  --provenance .specport/pulls/source.receipt.json \
-  --json
-~~~
-
-For an existing project, the parallel entry point is:
-
-~~~
-npx --yes @specport/specport@latest spec bundle .
-
-# The packet is draft-only until a human confirms intent, criteria, taste, and release.
-# Use --out <directory> when preserving an existing SPEC.md or .specport packet.
-
-# Map edit zones, symbols, local imports, and callable surfaces without executing code:
-specport map . --json --write .specport/repo-map.json
-
-# Install a packaged playbook into a host agent's native skill directory:
-specport skill list
-specport skill export specport-repo-to-spec --out .codex/skills/specport-repo-to-spec
-~~~
-
-## Value thesis and adoption bar
-
-SpecPort has high potential value, but its value is concentrated in a sharper
-job than the long-term vision suggests. The market already has several tools
-that turn a prompt into requirements, a plan, tasks, and implementation. Do
-not position SpecPort as another generic spec-driven coding framework.
-
-The near-term buyer is an AI-native maintainer, founder, or agency shipping a
-change in an existing repository where an unreviewed file, invented product
-decision, provenance mistake, or false sense of completion is costly. The
-near-term job is:
 
 > After an AI agent finishes, prove that the exact final tree is understood,
 > covered by the approved review source, and still consistent with the human
 > contract before merge or release.
 
-The current foundation is a credible evidence layer for that job, not yet a
-magic builder. For a solo vibe coder, a repo packet that only produces an
-inventory and asks for more human decisions can feel like ceremony. It earns
-strong value only when it catches something that would otherwise have escaped
-review or makes the merge/release decision materially safer.
+The first useful command must remain low-friction:
 
-The product earns a claim of substantial value when these adoption tests are
-true:
+~~~bash
+npx --yes @specport/specport@latest coverage
+~~~
 
-- one low-friction post-agent command or host-agent hook produces a
-  merge-ready receipt containing final-tree coverage, contract status, test and
-  artifact evidence, and lock/drift state;
-- the receipt catches hidden or unreviewed files, contract gaps, provenance
-  problems, or release risks in real changes, rather than merely restating an
-  inventory;
-- Claude, Codex, Cursor, and CI users can consume the result through native
-  integrations instead of copying a packet between tools;
-- a pilot across 10--20 real AI-made changes measures findings, false
-  positives, added review time, and whether a human changed a merge decision;
-- at least three external maintainers, or one small engineering team, use the
-  workflow repeatedly before SpecPort expands into a public registry,
-  ratings, or broad code-generating adapters.
+When the package is PUBLISHED, the primary install block is:
 
-Until those tests are met, lead with the narrow promise: **AI agents make code
-fast; SpecPort proves the final tree before merge.** Treat portable specs,
-cover/remix, discovery, and code generation as the expansion path that this
-trust layer can earn, not as proof of present adoption.
+~~~bash
+npm install --save-dev @specport/specport
+npx --no-install specport coverage
+~~~
 
-The create, check, discover, bundle, validate, pull, map, skill list, skill
-export, lock, drift, guard, and bounded lifecycle artifact commands are implemented
-and tested in the current foundation. Bundle writes a complete draft-only repo-to-spec
-packet with output hashes and refuses to replace an accepted SPEC.md. Map is a
-bounded static/token scan, not a full language AST or runtime behavior proof.
-Pull covers one exact GitHub file at a resolved commit and records a content
-digest, license, and provenance evidence. Cover produces a ready-or-blocked
-plan, remix produces a draft with preserved parent identity, and build produces
-a ready-or-blocked handoff; none of these commands generate code, run
-repository checks, perform taste review, or make a ship decision.
-Manifest-based discovery, full AST-specific mapping, code-generating target
-adapters, search, and public discovery remain roadmap work.
+When the package is NOT-PUBLISHED, that block must be visibly marked as
+unavailable and replaced with a verified source or exact-tarball path.
 
-## Phased roadmap
+For the current spec foundation, the richer first-minute path is:
 
-### Phase 0: current repository foundation
+~~~bash
+npx --yes @specport/specport@latest spec bundle .
+specport spec validate .specport/contract.json
+specport spec lock SPEC.md --out SPEC.lock
+specport spec drift SPEC.md --lock SPEC.lock --json
+~~~
 
-The current codebase is already an early spec foundation:
+The website must explain what each command proves and does not prove. An
+inventory-only result, a blocked handoff, or a passing check must not be
+presented as product approval or a ship decision.
 
-- spec discover creates a grounded repository-baseline draft from observed
-  files, package metadata, Git state, README headings, and detected checks;
-- spec bundle composes discovery, bounded mapping, structural checking, and
-  evidence-ledger generation into one draft-only repo-to-spec packet;
-- spec lock records the exact spec, supporting artifact digests, repository
-  identity, and source-tree basis needed to reproduce a handoff;
-- spec drift compares the locked files and source-tree basis, returning a
-  nonzero hold signal for changed or unresolvable state;
-- spec guard requires an explicit receiver or approved scope, then binds the
-  final tree to an accepted spec, contract acceptance, verification evidence,
-  taste evidence when required, and a clean candidate lock. It returns a
-  merge-ready receipt without executing repository code or granting ship
-  authority;
-- spec validate validates a human-owned product contract with intent,
-  acceptance, verification, taste, release, and path-boundary fields;
-- spec create preserves arbitrary text as a provenance-bearing draft, and spec
-  check reports whether a SPEC.md is structurally ready, human-accepted, and
-  free of unresolved decisions;
-- spec map produces a deterministic bounded static map of file roles, symbols,
-  local import edges, package/HTTP/CLI surfaces, safety limits, and unknowns;
-- spec cover produces a lineage-aware target plan and fails closed when source
-  license, contract, or target evidence is not sufficient;
-- spec remix produces a parent-preserving draft with an explicit change set,
-  attribution requirement, and human re-acceptance boundary;
-- spec build produces a machine-readable implementation handoff whose execution
-  flags prove that SpecPort itself generated no code and ran no target code;
-- the repository includes native skills for repository-to-spec and
-  spec-to-production workflows, including durable gate, taste-review, and
-  ship-receipt templates;
-- skill list/export exposes those packaged playbooks to a host agent without
-  silently overwriting an existing skill directory;
-- coverage compares the final Git-visible tree with an explicit review
-  receiver or expected scope and reports complete, partial, or unknown.
+After implementation, the exact merge-readiness command is a later workflow,
+not a first-minute install claim:
 
-These are valuable foundations and evidence adapters, but they are not yet the
-full product described here. The current code does not yet provide
-manifest-based discovery, full language AST mapping, code-generating target
-adapters or a general build executor, public discovery, or ratings.
+~~~bash
+specport spec guard . \
+  --spec SPEC.md \
+  --contract .specport/contract.json \
+  --acceptance-record .specport/evidence/contract-acceptance.json \
+  --verification .specport/evidence/verification.json \
+  --taste .specport/evidence/taste.json \
+  --lock SPEC.lock \
+  --expected-scope .specport/evidence/approved-scope.json \
+  --write .specport/evidence/guard.json \
+  --json
+~~~
 
-Keep current commands and artifacts honest. Do not describe a lifecycle plan or
-handoff as generated software, a passing check, taste approval, or a release.
-Do not let the coverage adapter become the definition of SpecPort.
+The guard requires identity-bound evidence and returns merge-ready evidence; it
+does not publish, deploy, or approve shipping.
 
-### Phase 1: unify the foundational spec format
+## Current product contract
 
-Extend the existing contract and repository-baseline artifacts into a stable
-human-readable SPEC.md plus machine-readable metadata. Harden provenance,
-readiness, unknown/decision handling, and the deterministic create/check
-workflows with representative messy-text fixtures. If a model is used by a
-host skill, require a human review step for its draft; the core CLI itself
-must remain model-neutral.
+The website may label a capability “shipping” only when the current checkout
+and package verification support that claim. The source of truth is the CLI,
+tests, README, schemas, and release evidence—not a marketing table.
 
-### Phase 2: GitHub discovery and build
+Every `shipping` row must be backed by a release receipt containing the reviewed
+commit, the command or package surface checked, the exact validation command,
+the exit result, and the evidence path. If that receipt is missing or stale,
+the website must use `unknown`, `human gate`, or `roadmap` rather than guessing.
 
-Extend the exact-ref pull foundation with manifest and naming conventions,
-discovery, local inspection, and a bounded build handoff. Prove the workflow
-against fixture repositories before adding a public index.
+| Surface | Current meaning | Website status |
+| --- | --- | --- |
+| coverage | Compare the final Git-visible tree with a receiver or approved scope. | shipping when verified |
+| spec discover | Create a grounded repository-baseline draft from observed evidence. | shipping when verified |
+| spec bundle | Produce SPEC.md, baseline, bounded map, evidence ledger, spec-check, and packet manifest in one read-only pass. | shipping when verified |
+| spec lock / spec drift | Record reproducibility fingerprints and fail closed on changed or unknown state. | shipping when verified |
+| spec guard | Bind final-tree coverage, contract acceptance, verification, taste, and lock evidence into a merge-ready receipt. It does not ship. | shipping with boundary text |
+| spec validate | Validate a human-owned product contract before implementation. | shipping when verified |
+| create / check | Preserve rough input as a draft, then report provenance, criteria, verification, taste, release, and acceptance gaps. | shipping when verified |
+| pull | Fetch one spec from one exact GitHub ref with license and provenance evidence, without executing repository code. | shipping with boundary text |
+| spec map | Produce a bounded static implementation map with explicit unknowns. It is not complete runtime or product-intent understanding. | shipping with boundary text |
+| skill list / skill export | List and copy the packaged repository-to-spec and spec-to-production playbooks without silent overwrite. | shipping when verified |
+| spec cover / spec remix | Create lineage, license, target, and change-set handoffs. | bounded handoff |
+| spec build | Produce a human-gated implementation handoff. It does not generate or run code. | human gate |
+| Public search, discovery, ratings, and reputation | Future index and network capabilities. | roadmap |
 
-### Phase 3: repository-to-spec mapping
+## Website contract
 
-Extend the bounded static mapper with AST and evidence adapters for a small
-number of useful languages. Validate observed facts against fixture
-repositories and make inferred intent and unknown behavior visible in the
-generated spec. The mapper must remain read-only and must never claim runtime
-behavior from syntax alone.
+### Above-the-fold outcome
 
-### Phase 4: cover, remix, and AI skills
+At a desktop viewport and on a narrow mobile viewport, the first screen must
+answer these questions without requiring a long scroll:
 
-Add lineage-aware cover/remix operations, target compatibility profiles,
-deviation reports, and additional native skills for Claude, Codex, and other
-agents.
-Validate the same spec through at least two agent runtimes or a runtime-neutral
-dry-run protocol before claiming vendor portability.
+1. What is SpecPort?
+2. Who is it for?
+3. What can I do with it today?
+4. What exact command do I run?
+5. Is the package published and is this site deployed?
+6. Where are the docs, commands, source, and release history?
 
-### Phase 5: open discovery and reputation
+The hero must lead with a concrete product sentence, such as:
 
-Only after real specs are being pulled, covered, remixed, and built, add
-search, sharing, ratings, verified evidence, and reputation signals. Keep
-quality, security, licensing, and maintenance visible alongside popularity.
+> SpecPort is a deterministic CLI that proves your final Git tree matches a
+> review source or approved scope before merge.
 
-## Acceptance gates
+An evocative headline may support that sentence, but it cannot replace it.
 
-Each phase must be demonstrated with a real fixture and a readable artifact:
+The first action must be an immediately usable install or quick-start action.
+If the package is not verified on npm, the page must say NOT-PUBLISHED and
+provide a verified local or exact-tarball path instead of presenting a broken
+public install promise.
 
-- messy input produces a SPEC.md that retains source facts, exposes unknowns,
-  and passes the readiness check only when material decisions are present;
-- a GitHub fixture is discovered by the documented convention, pulled at an
-  exact ref, and reported with license and provenance;
-- a repository fixture produces an AST/evidence draft that separates observed,
-  inferred, and unknown statements;
-- a cover or remix preserves parent identity, license, lineage, and an explicit
-  change/deviation record; any verification that did not run remains labeled;
-- an AI skill can perform the workflow in a bounded test repository and return
-  structured results without silently expanding scope;
-- a candidate fixture with an approved scope, accepted contract, durable
-  acceptance record, passing identity-bound verification and taste evidence,
-  and clean `SPEC.lock` produces a `spec guard` receipt with
-  `verdict: merge-ready`; any changed identity or missing evidence returns
-  exit `5` and never executes repository code;
-- the exact npm package installs in a clean consumer and supports both human
-  output and stable machine-readable output, including native skill listing and
-  export;
-- ratings and public sharing are not called successful until real specs have
-  repeated pull, cover, remix, and build activity. Once the signals are
-  trustworthy, high-rated specs can be surfaced and shared with their evidence
-  and license still visible.
+### Required information architecture
+
+The public site should use task-oriented navigation, not only internal essay
+anchors:
+
+- Overview
+- Install / Quick start
+- Documentation
+- Commands
+- Skills
+- Schemas and examples
+- Changelog / Releases
+- GitHub
+
+The page should be organized in this order:
+
+1. Product identity, current package status, and one working action.
+2. Quick start with an exact command and representative output.
+3. Current capabilities with shipping, bounded handoff, human gate, or roadmap
+   status.
+4. Command and documentation index linking to real repository artifacts.
+5. Trust surface: version, license, Node requirement, provenance, privacy,
+   exit codes, source, issues, security, and release history.
+6. Clearly labeled future direction: portable specs, public discovery,
+   cover/remix/build expansion, and reputation signals.
+
+If there is not yet a real public spec corpus, do not render a fake search box,
+fake package counts, fake downloads, fake maintainers, fake testimonials, or a
+fake browse-registry flow. Link to real examples and source files until a real
+index exists.
+
+### Reference principles
+
+The reference sites establish functional roles, not a requirement to copy their
+CSS:
+
+- npm makes package search, popular packages, discovery, recent updates, and
+  package metrics visible.
+- PyPI makes “find, install, and publish” explicit, then provides search,
+  project browsing, documentation, and ecosystem statistics.
+- MacPorts makes download, available ports, installation, documentation,
+  support, and the latest release easy to find.
+
+For SpecPort, translate those roles into:
+
+- find the product and its exact package name;
+- install or run the current CLI;
+- browse real commands, skills, schemas, and examples;
+- inspect version, license, release, provenance, and compatibility;
+- find source, issues, security, and contribution paths;
+- understand the future spec index without confusing it with the current CLI.
+
+The visual system may retain paper/ink contrast, mono command surfaces, and one
+signal accent. It should reduce decorative grain, rotated mockups, giant empty
+editorial sections, and full-bleed panels when they compete with install,
+search, documentation, or release actions.
+
+### Interaction and content rules
+
+- Every primary CTA must perform the action its label promises. “Read the
+  contract” must open the contract or contract example, not a premise section.
+- Every shell command must be copyable, exact, and verified against the current
+  package/README contract.
+- Terminal output must be labeled example unless it was generated from a
+  committed fixture or release verification run.
+- Version, package name, license, engine, publication state, deployment state,
+  and release links must have one traceable source of truth.
+- A status table must never label a human-gated handoff as shipped software.
+- Privacy must be visible in one click: local inspection is the default; only
+  explicitly requested receiver URLs or the single exact GitHub ref used by pull
+  are contacted; source, prompts, transcripts, and credentials are not uploaded
+  to a SpecPort service.
+- No analytics, account, sign-in, hosted dashboard, or shared production key
+  may be introduced merely to imitate a registry homepage.
+- The page must remain usable without JavaScript except for optional copy
+  enhancement. A failed clipboard action must not hide the command.
+- The mobile navigation must not silently hide the primary documentation and
+  install paths.
+
+## Release and distribution truth
+
+The package identity is:
+
+- name: @specport/specport;
+- executable: specport;
+- version: read from package.json; never hard-code it in site copy;
+- license: MIT;
+- engine: Node.js >=20;
+- repository: https://github.com/stancsz/specport;
+- homepage: https://stancsz.github.io/specport/.
+
+publishConfig.access or a successful local package build does not prove public
+npm publication. The website may say PUBLISHED only after a release check
+confirms:
+
+~~~bash
+npm view @specport/specport version --registry https://registry.npmjs.org/
+npm view @specport/specport dist.tarball --registry https://registry.npmjs.org/
+~~~
+
+The returned version and tarball must match the intended release. Until then,
+the site must use NOT-PUBLISHED and offer a verified source or exact-tarball
+installation path. The same rule applies to Pages: a local docs directory or a
+successful workflow definition does not prove that the deployed URL is current.
+Fetch the deployed URL and inspect its title, install section, and
+commit/release identity before calling it deployed.
+
+Every release receipt should record:
+
+- package version and commit;
+- npm view result or explicit NOT-PUBLISHED state;
+- npm pack file list and clean-consumer install result;
+- typecheck, lint, build, and test results;
+- Pages workflow and fetched deployed-page result;
+- known external gates and their owner.
 
 ## Product invariants
 
 - A spec is portable and versioned; it is never trapped in a chat transcript.
-- Intent, constraints, acceptance criteria, and ship decisions remain
-  human-owned.
+- Human-owned intent, constraints, acceptance criteria, taste, and final ship
+  decisions remain outside AI or adapter authority.
 - Observed facts, model inference, and unknowns are visibly different.
-- No AI or adapter may silently invent requirements, erase provenance, or
-  claim a check passed when it did not run.
-- Local/private operation is the default; network and model access are
-  explicit.
-- Licenses, attribution, dependencies, and security warnings travel with a
-  pulled, covered, or remixed spec.
-- Generated code is an output of a build workflow, not proof that the spec was
-  correct or that the product is ready to ship.
-- Every major workflow has a human-readable artifact and a machine-readable
+- No AI or adapter may silently invent requirements, erase provenance, or claim a
+  check passed when it did not run.
+- Local/private operation is the default; network and model access are explicit.
+- Licenses, attribution, dependencies, compatibility, and security warnings
+  travel with a pulled, covered, or remixed spec.
+- Generated code, a passing test, a merge-ready receipt, or a marketing page is
+  not proof that a product is correct or ready to ship.
+- Every major workflow has both a human-readable artifact and a machine-readable
   result.
+- The website must never claim current adoption, public registry coverage, or
+  package publication without current evidence.
+
+## Roadmap boundaries
+
+### Current foundation
+
+The current repository includes the early local foundation: repository
+discovery, source-preserving draft authoring, readiness checks, bounded mapping,
+repo-to-spec packets, lock/drift evidence, provenance-preserving pull,
+lineage-aware cover/remix/build handoffs, identity-bound guard, and packaged
+agent playbooks. Keep these commands and artifacts honest and verified.
+
+### Next product work
+
+The next product work may unify the spec format, improve exact-ref GitHub
+discovery and local inspection, add carefully bounded mapping adapters, and
+strengthen cover/remix and agent workflows. Each increment requires a fixture,
+readable output, explicit provenance, and a human boundary.
+
+### Future ecosystem work
+
+Public search, manifest-based discovery, shared indexes, ratings, reputation,
+verified build signals, code-generating adapters, and broad public sharing are
+future work. Do not build those surfaces merely to make the website resemble a
+registry. Earn them only after real specs are being pulled, covered, remixed,
+and built by external users.
+
+## Acceptance gates
+
+The goal is not complete until all applicable gates have evidence.
+
+### Product and distribution
+
+- npm run typecheck, npm run lint, npm run build, and npm test pass.
+- npm run verify:package passes, including package contents and installed CLI
+  smoke tests.
+- A clean consumer can install the exact packed artifact and run
+  specport --version and specport coverage --help successfully.
+- If public npm publication is claimed, npm view returns the intended version
+  and tarball. Otherwise the website visibly says NOT-PUBLISHED.
+- When the package is NOT-PUBLISHED, npm pack and a clean-consumer install of
+  the exact tarball succeed, the website links to that exact artifact or source
+  path, and no public npm install CTA is presented as available.
+- Every documented command exists in the current CLI or is explicitly labeled
+  roadmap; no marketing copy upgrades a plan into a shipped feature.
+
+### Website behavior
+
+- At 1280×900 and 390×844, the first screen contains the concrete product
+  sentence, current distribution status, one valid install/quick-start action,
+  and links to documentation and source.
+- The first useful action does not require scrolling through several editorial
+  sections.
+- The command reference lists every shipped command, its one-line purpose,
+  important boundary, and a link to a real README, skill, schema, or example.
+- The capability table is traceable to CLI help, tests, package contents, or a
+  labeled roadmap entry.
+- All links resolve, including the contract CTA, package/source links, docs,
+  skills, examples, changelog, issues, security, and release paths.
+- A privacy section is reachable from the primary navigation in one click and
+  states the local-inspection default, explicit receiver/GitHub network boundary,
+  and no-upload handling for source, prompts, transcripts, and credentials.
+- The site has a usable keyboard path, visible focus, readable contrast, useful
+  mobile navigation, semantic headings, and no required JavaScript for reading
+  or copying commands.
+- The site contains no fake search, fake metrics, fake adoption, fake package
+  availability, or fake terminal evidence.
+- A copy/status review records the source or fixture for every visible number,
+  terminal result, package claim, maintainer claim, and adoption statement; an
+  unsupported claim blocks the release.
+
+### Deployment evidence
+
+- The Pages workflow succeeds for the intended commit.
+- The deployed URL is fetched after deployment and its title, first-fold copy,
+  install status, navigation, and capability status match the reviewed source.
+- A desktop and mobile screenshot are captured for the deployed page.
+- git diff --check passes and only intended files are changed.
 
 ## Non-goals
 
 SpecPort is not initially:
 
 - a generic autonomous coding agent;
-- a replacement for tests, security review, deployment, or human approval;
-- a hosted SaaS marketplace that requires a SpecPort account;
+- an AI reviewer or replacement for tests, security review, deployment, or human
+  approval;
+- a magic compiler or guarantee of correct generated software;
+- a hosted SaaS marketplace requiring a SpecPort account;
 - a package manager that executes arbitrary pulled repositories;
 - a claim that AST structure reveals complete product intent;
-- a popularity contest that treats ratings as proof of correctness.
+- a public registry with ratings or popularity proof before a real corpus and
+  repeated external use exist;
+- a visual clone of npm, MacPorts, or PyPI.
 
 ## Definition of success
 
-SpecPort succeeds when a new user can take messy intent, an existing
-repository, or a licensed GitHub spec and move through a clear local path to
-a reviewable, AI-implementable spec. They can cover or remix that spec for
-their context, build it with the AI and tools they choose, and inspect what
-was observed, inferred, changed, tested, and still unknown.
+SpecPort succeeds when a new visitor can reach the product’s first useful action
+without decoding a manifesto, install or run the current CLI through a truthful
+path, find the relevant documentation and source, understand what each current
+surface proves, and distinguish shipped behavior from roadmap work.
 
-The durable moat is not a file extension or a single model integration. It is
-the portable lifecycle, provenance, evidence, and network of useful specs that
-gets better as people build, cover, remix, and responsibly rate them.
+The website is complete only when it is operationally useful, distribution
+truthful, visually coherent, accessible, deployed, and supported by current
+evidence. A persuasive screenshot, a successful local build, or a written
+roadmap alone is not completion evidence.
+
+The durable moat remains the portable lifecycle, provenance, evidence, and
+network of useful specs that gets better as people build, cover, remix, and
+responsibly share them. The site should make that direction legible while
+earning trust through the narrow product that exists today.
