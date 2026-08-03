@@ -11,6 +11,7 @@
   const publishedPathCard = document.querySelector("[data-published-path-card]");
   const registryMessage = document.querySelector("[data-registry-message]");
   const installSummary = document.querySelector("[data-install-summary]");
+  const publicationMessage = document.querySelector("[data-publication-message]");
 
   const setButtonState = (button, text, delay = 1500) => {
     const original = button.dataset.originalLabel || button.textContent;
@@ -85,6 +86,7 @@
         if (publishedPathCard) publishedPathCard.classList.add("code-card-published");
         if (registryMessage) registryMessage.textContent = "The exact version and tarball are available from npm.";
         if (installSummary) installSummary.textContent = "The published package path is verified. The source path remains available for contributors and reproducible checks.";
+        if (publicationMessage) publicationMessage.textContent = "npm publication verified for this version and tarball";
       }
     }
 

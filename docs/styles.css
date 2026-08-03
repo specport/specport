@@ -224,6 +224,11 @@ a:focus-visible {
   background: rgba(16, 35, 61, 0.3);
 }
 
+.release-banner-pages {
+  font: 10px/1.2 var(--mono);
+  letter-spacing: 0.03em;
+}
+
 .release-banner > a {
   font: 11px/1 var(--mono);
   letter-spacing: 0.03em;
