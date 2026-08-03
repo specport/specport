@@ -133,7 +133,50 @@ the website must use `unknown`, `human gate`, or `roadmap` rather than guessing.
 | skill list / skill export | List and copy the packaged repository-to-spec and spec-to-production playbooks without silent overwrite. | shipping when verified |
 | spec cover / spec remix | Create lineage, license, target, and change-set handoffs. | bounded handoff |
 | spec build | Produce a human-gated implementation handoff. It does not generate or run code. | human gate |
-| Public search, discovery, ratings, and reputation | Future index and network capabilities. | roadmap |
+| GitHub SPEC catalog / Discover | Automatically index public repositories with more than 200 stars and an exact `SPEC.md`; presence is discoverability, not endorsement. | roadmap |
+| Ratings and reputation | Future quality, lineage, and adoption signals layered on top of verified catalog records. | roadmap |
+
+### GitHub SPEC catalog / Discover direction
+
+`spec discover` remains the local repository-to-spec draft command. The public
+Discover feature is a separate, explicitly networked catalog that looks for
+usable specs on GitHub.
+
+An entry qualifies automatically only when both conditions are true at catalog
+sync time:
+
+1. The repository is public and has **more than 200 stars**. Exactly 200 stars
+   does not qualify.
+2. The repository's default branch contains at least one file whose exact
+   filename is `SPEC.md`. Each qualifying file is one catalog entry and the
+   complete path is part of its identity, so a root `SPEC.md` and
+   `specs/mobile/SPEC.md` are distinct entries in the same repository.
+
+The indexer should use GitHub code search to find candidates, then re-check
+repository metadata and the default-branch tree/content endpoint before writing
+an entry. Search results are only candidate evidence: the final record must
+contain a repository snapshot, default branch, commit SHA, file path, file SHA,
+star count, license declaration, GitHub repository URL, spec URL, and
+`indexedAt` timestamp. A record is removed or marked stale when a refresh can
+no longer verify the two qualification conditions.
+
+The catalog is a discovery layer, not an approval layer. It must not execute
+repository code, silently copy or rewrite the spec, claim that the spec is
+correct, or turn GitHub stars into a quality score. A missing GitHub license is
+shown as `unknown` with a review warning; it is not hidden or presented as
+permission to redistribute. Every entry links to the exact GitHub file and can
+offer an exact-ref pull command such as:
+
+~~~bash
+specport pull owner/repo@<commit>:path/to/SPEC.md
+~~~
+
+The first implementation should generate a deterministic `catalog.json` from a
+bounded, authenticated GitHub Action on a scheduled refresh, preserve the
+source snapshot in each record, deduplicate by `owner/repo:path`, and expose
+the last successful sync time and incomplete/rate-limited state. Until that
+real index exists, the website must keep Discover labeled `roadmap` and must
+not render a fake search box, result count, or popularity metric.
 
 ## Website contract
 
@@ -229,10 +272,12 @@ search, documentation, or release actions.
 - Version, package name, license, engine, publication state, deployment state,
   and release links must have one traceable source of truth.
 - A status table must never label a human-gated handoff as shipped software.
-- Privacy must be visible in one click: local inspection is the default; only
-  explicitly requested receiver URLs or the single exact GitHub ref used by pull
-  are contacted; source, prompts, transcripts, and credentials are not uploaded
-  to a SpecPort service.
+- Privacy must be visible in one click: local inspection is the default. The
+  current CLI contacts only explicitly requested receiver URLs or the single
+  exact GitHub ref used by `pull`; the future catalog runs as a bounded,
+  maintainer-controlled GitHub Action against public GitHub metadata. Neither
+  path uploads source, prompts, transcripts, or credentials to a SpecPort
+  service.
 - No analytics, account, sign-in, hosted dashboard, or shared production key
   may be introduced merely to imitate a registry homepage.
 - The page must remain usable without JavaScript except for optional copy
@@ -250,7 +295,7 @@ The package identity is:
 - license: MIT;
 - engine: Node.js >=20;
 - repository: https://github.com/stancsz/specport;
-- homepage: https://stancsz.github.io/specport/.
+- homepage: https://specport.github.io/.
 
 publishConfig.access or a successful local package build does not prove public
 npm publication. The website may say PUBLISHED only after a release check
@@ -314,11 +359,12 @@ readable output, explicit provenance, and a human boundary.
 
 ### Future ecosystem work
 
-Public search, manifest-based discovery, shared indexes, ratings, reputation,
-verified build signals, code-generating adapters, and broad public sharing are
-future work. Do not build those surfaces merely to make the website resemble a
-registry. Earn them only after real specs are being pulled, covered, remixed,
-and built by external users.
+The first ecosystem increment is the GitHub SPEC catalog described above:
+bounded metadata discovery, exact-file provenance, and a truthful static
+Discover surface. After that corpus is real, public search, manifest-based
+discovery, shared indexes, ratings, reputation, verified build signals,
+code-generating adapters, and broad public sharing can be evaluated. Do not
+build those surfaces merely to make the website resemble a registry.
 
 ## Acceptance gates
 
@@ -338,6 +384,12 @@ The goal is not complete until all applicable gates have evidence.
   path, and no public npm install CTA is presented as available.
 - Every documented command exists in the current CLI or is explicitly labeled
   roadmap; no marketing copy upgrades a plan into a shipped feature.
+- Catalog fixtures prove that 200 stars is excluded, 201 stars without an
+  exact `SPEC.md` is excluded, and 201 stars with a verified default-branch
+  `SPEC.md` is included with stable provenance and a deterministic record ID.
+- A catalog refresh is idempotent, deduplicates multiple paths correctly,
+  surfaces GitHub rate-limit/incomplete-search state, and never executes
+  repository code.
 
 ### Website behavior
 
@@ -384,7 +436,8 @@ SpecPort is not initially:
 - a package manager that executes arbitrary pulled repositories;
 - a claim that AST structure reveals complete product intent;
 - a public registry with ratings or popularity proof before a real corpus and
-  repeated external use exist;
+  repeated external use exist. The first catalog may show GitHub's star-count
+  snapshot only as an eligibility fact, never as a SpecPort quality score;
 - a visual clone of npm, MacPorts, or PyPI.
 
 ## Definition of success

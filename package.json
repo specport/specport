@@ -4,7 +4,7 @@
   "description": "Deterministic final-tree review coverage and contract scaffolding for AI-assisted code changes",
   "license": "MIT",
   "type": "module",
-  "homepage": "https://stancsz.github.io/specport/",
+  "homepage": "https://specport.github.io/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stancsz/specport.git"
@@ -48,7 +48,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src tests",
     "test": "vitest run",
-    "site:sync": "node scripts/sync-site-release.mjs",
     "test:watch": "vitest",
     "verify:package": "npm run typecheck && npm run lint && npm run build && npm test && node scripts/verify-package.mjs",
     "prepack": "npm run verify:package"
@@ -64,7 +63,6 @@
   "main": "dist/cli.js",
   "types": "dist/cli.d.ts",
   "directories": {
-    "doc": "docs",
     "example": "examples",
     "test": "tests"
   },

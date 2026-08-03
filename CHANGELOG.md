@@ -27,8 +27,8 @@ exact npm artifact and clean-consumer smoke test pass.
   rollback, and ship-authority fields.
 - Added runtime-neutral repository-to-spec and spec-to-production skills with
   Codex metadata, plus `skill list`/`skill export` packaging commands.
-- Added cross-platform CI, package smoke validation, documentation, and
-  GitHub Pages source.
+- Added cross-platform CI, package smoke validation, documentation, and a
+  dedicated GitHub Pages site in `specport/specport.github.io`.
 - Added a commit-pinned, license-aware GitHub spec pull with a provenance
   receipt and no-code-execution boundary.
 - Added a bounded, deterministic repository map for file roles, static symbols,

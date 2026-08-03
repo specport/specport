@@ -386,4 +386,4 @@ deployment, cross-platform validation, code-generating adapters, and repeated
 maintainer adoption are external or future gates; the project does not claim
 those are proven by local tests.
 
-More detail and the product contract are on the [project site](https://stancsz.github.io/specport/).
+More detail and the product contract are on the [project site](https://specport.github.io/).

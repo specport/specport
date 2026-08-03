@@ -50,19 +50,21 @@ npx --no-install specport skill list --json
 
 ## GitHub Pages
 
-The static source is `docs/` and the workflow is
-`.github/workflows/pages.yml`. Inspect the run and then the actual URL:
+The static site and Pages workflow live in the separate
+`specport/specport.github.io` repository. Inspect that workflow and then the
+actual URL:
 
 ```bash
-gh run list --workflow "Publish GitHub Pages" --limit 5
-gh run view <run-id> --log-failed
+gh --repo specport/specport.github.io run list --workflow "Publish GitHub Pages" --limit 5
+gh --repo specport/specport.github.io run view <run-id> --log-failed
 ```
 
 Do not call the site live because the workflow file exists. A Pages site must
 be provisioned, the workflow must succeed, and the URL must return the
-expected title and install links. Private repositories may require a plan that
-supports Pages or an owner-approved visibility change; never change visibility
-implicitly.
+expected title and install links at `https://specport.github.io/`. The source
+repository only publishes the package; it does not contain the static site.
+Private repositories may require a plan that supports Pages or an owner-approved
+visibility change; never change visibility implicitly.
 
 ## Recovery
 
