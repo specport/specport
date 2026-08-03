@@ -171,55 +171,55 @@
           <article class="command-card command-card-featured">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">01</span></div>
             <h3><code>coverage</code></h3>
-            <p>Compare the final Git-visible tree with a receiver or approved scope.</p>
+            <p>Compare the final Git-visible tree with a receiver or approved scope; it reports evidence, not ship approval.</p>
             <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">02</span></div>
             <h3><code>spec bundle</code></h3>
-            <p>Write a grounded SPEC.md, baseline, bounded map, ledger, checks, and packet manifest.</p>
+            <p>Write a grounded SPEC.md, baseline, bounded map, ledger, checks, and packet manifest; it remains draft evidence.</p>
             <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">03</span></div>
-            <h3><code>spec lock / drift</code></h3>
-            <p>Record reproducibility fingerprints and hold when the spec or source tree changes.</p>
+            <h3><code>spec lock / spec drift</code></h3>
+            <p>Record reproducibility fingerprints and hold when the spec or source tree changes; it is not release approval.</p>
             <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card command-card-dark">
             <div class="command-card-top"><span class="status-label status-label-accent">HUMAN GATE</span><span class="command-index">04</span></div>
             <h3><code>spec guard</code></h3>
-            <p>Bind coverage, contract acceptance, verification, taste, and lock evidence before merge.</p>
+            <p>Bind coverage, contract acceptance, verification, taste, and lock evidence before merge; merge-ready is not ship authority.</p>
             <a href="https://github.com/stancsz/specport#guard-one-candidate-before-merge">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">05</span></div>
-            <h3><code>create / check</code></h3>
-            <p>Preserve rough input as a draft, then expose missing decisions and readiness gaps.</p>
+            <h3><code>spec create / spec check</code></h3>
+            <p>Preserve rough input as a draft, then expose missing decisions and readiness gaps; human intent remains explicit.</p>
             <a href="https://github.com/stancsz/specport#specs-that-are-evidence-contracts-and-taste">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">06</span></div>
-            <h3><code>pull / map</code></h3>
-            <p>Fetch one exact GitHub spec or map a repository without executing its code.</p>
+            <h3><code>pull / spec map</code></h3>
+            <p>Fetch one exact GitHub spec or map a repository without executing its code; mapping stays bounded.</p>
             <a href="https://github.com/stancsz/specport#readme">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">07</span></div>
-            <h3><code>spec discover / validate</code></h3>
-            <p>Find the nearest contract surface and check whether a spec is complete enough to use.</p>
+            <h3><code>spec discover / spec validate</code></h3>
+            <p>Find the nearest contract surface and check whether a spec is complete enough to use; observation is not accepted intent.</p>
             <a href="https://github.com/stancsz/specport#the-first-minute-workflow">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card">
             <div class="command-card-top"><span class="status-label status-label-live">SHIPPING</span><span class="command-index">08</span></div>
-            <h3><code>skill list / export</code></h3>
-            <p>Inspect the included agent playbooks and export a verified skill bundle for local use.</p>
+            <h3><code>skill list / skill export</code></h3>
+            <p>Inspect the included agent playbooks and export a verified skill bundle for local use without silent overwrite.</p>
             <a href="https://github.com/stancsz/specport/tree/main/skills">Read usage <span aria-hidden="true">↗</span></a>
           </article>
           <article class="command-card command-card-dark">
             <div class="command-card-top"><span class="status-label status-label-accent">HUMAN GATE</span><span class="command-index">09</span></div>
-            <h3><code>cover / remix / build</code></h3>
-            <p>Carry a bounded contract into a new implementation plan without erasing lineage or judgment.</p>
+            <h3><code>spec cover / spec remix / spec build</code></h3>
+            <p>Carry a bounded contract into a new implementation plan without erasing lineage or judgment; no code is generated.</p>
             <a href="https://github.com/stancsz/specport#cover-remix-and-build-handoffs">Read usage <span aria-hidden="true">↗</span></a>
           </article>
         </div>
@@ -228,6 +228,7 @@
           <span>Need the complete surface?</span>
           <a class="text-link" href="https://github.com/stancsz/specport#output-and-exit-codes">View commands and exit codes <span aria-hidden="true">↗</span></a>
         </div>
+        <p class="command-aliases"><span>COMPATIBILITY</span> <code>review --quick</code> remains a legacy alias; top-level aliases mirror the namespaced <code>spec ...</code> commands.</p>
       </section>
 
       <section class="section-shell section-block docs-block" id="docs">
@@ -282,11 +283,13 @@
         <div class="surface-table" role="table" aria-label="SpecPort capability status">
           <div class="surface-row surface-header" role="row"><span role="columnheader">Surface</span><span role="columnheader">What it does</span><span role="columnheader">State</span></div>
           <div class="surface-row" role="row"><code role="cell">coverage</code><span role="cell">Final-tree coverage against an explicit receiver or approved scope.</span><span role="cell" class="state state-live">shipping</span></div>
-          <div class="surface-row" role="row"><code role="cell">spec bundle</code><span role="cell">One read-only repo-to-spec packet with evidence and unknowns.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec discover / spec bundle</code><span role="cell">Grounded repository evidence and one read-only repo-to-spec packet.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec lock / spec drift</code><span role="cell">Reproducibility fingerprints with fail-closed change diagnostics.</span><span role="cell" class="state state-live">shipping</span></div>
           <div class="surface-row" role="row"><code role="cell">spec guard</code><span role="cell">Identity-bound merge-ready receipt; never a ship approval.</span><span role="cell" class="state state-human">human gate</span></div>
-          <div class="surface-row" role="row"><code role="cell">create / validate</code><span role="cell">Draft and check a human-owned, AI-implementable contract.</span><span role="cell" class="state state-live">shipping</span></div>
-          <div class="surface-row" role="row"><code role="cell">pull / map</code><span role="cell">One exact licensed pull and bounded static repository map.</span><span role="cell" class="state state-live">shipping</span></div>
-          <div class="surface-row" role="row"><code role="cell">cover / remix / build</code><span role="cell">Lineage-preserving plans and a human-gated implementation handoff.</span><span role="cell" class="state state-human">bounded handoff</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec create / spec check / spec validate</code><span role="cell">Draft, check, and validate a human-owned product contract.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">pull / spec map</code><span role="cell">One exact licensed pull and bounded static repository map.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">skill list / skill export</code><span role="cell">List and copy the packaged local agent playbooks.</span><span role="cell" class="state state-live">shipping</span></div>
+          <div class="surface-row" role="row"><code role="cell">spec cover / spec remix / spec build</code><span role="cell">Lineage-preserving plans and a human-gated implementation handoff.</span><span role="cell" class="state state-human">bounded handoff</span></div>
           <div class="surface-row" role="row"><code role="cell">public index / ratings</code><span role="cell">Search, sharing, reputation, and a future spec network.</span><span role="cell" class="state state-roadmap">roadmap</span></div>
         </div>
       </section>
