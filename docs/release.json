@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "engine": ">=20",
+  "bin": "specport",
   "repository": "git+https://github.com/stancsz/specport.git",
   "homepage": "https://stancsz.github.io/specport/",
   "publicationStatus": "NOT-PUBLISHED",

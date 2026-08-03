@@ -6,6 +6,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const packagePath = join(root, 'package.json');
 const outputPath = join(root, 'docs', 'release.json');
 const packageJson = JSON.parse(await readFile(packagePath, 'utf8'));
+const bin = typeof packageJson.bin === 'string'
+  ? packageJson.name.split('/').at(-1)
+  : Object.keys(packageJson.bin ?? {})[0] ?? null;
 
 const registryUrl = `https://registry.npmjs.org/${encodeURIComponent(packageJson.name)}`;
 const release = {
@@ -13,6 +16,7 @@ const release = {
   version: packageJson.version,
   license: packageJson.license,
   engine: packageJson.engines?.node ?? null,
+  bin,
   repository: packageJson.repository?.url ?? null,
   homepage: packageJson.homepage ?? null,
   publicationStatus: 'NOT-PUBLISHED',

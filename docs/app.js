@@ -2,6 +2,11 @@
   const copyButtons = document.querySelectorAll("[data-copy]");
   const releaseStatusNodes = document.querySelectorAll("[data-release-status]");
   const versionNodes = document.querySelectorAll("[data-release-version]");
+  const licenseNodes = document.querySelectorAll("[data-release-license]");
+  const engineNodes = document.querySelectorAll("[data-release-engine]");
+  const binNodes = document.querySelectorAll("[data-release-bin]");
+  const packageScopeNodes = document.querySelectorAll("[data-release-package-scope]");
+  const packageNameNodes = document.querySelectorAll("[data-release-package]");
   const pagesStatusNodes = document.querySelectorAll("[data-pages-status]");
   const commitNodes = document.querySelectorAll("[data-release-commit]");
   const packageNote = document.querySelector("[data-package-note]");
@@ -93,6 +98,37 @@
     if (release.version) {
       for (const node of versionNodes) {
         node.textContent = release.version;
+      }
+    }
+
+    if (release.license) {
+      for (const node of licenseNodes) {
+        node.textContent = release.license;
+      }
+    }
+
+    if (release.engine) {
+      const engine = release.engine.replace(/^>=/, "≥");
+      for (const node of engineNodes) {
+        node.textContent = engine;
+      }
+    }
+
+    if (release.bin) {
+      for (const node of binNodes) {
+        node.textContent = release.bin;
+      }
+    }
+
+    if (release.name) {
+      const separator = release.name.lastIndexOf("/");
+      const scope = separator >= 0 ? release.name.slice(0, separator + 1) : "";
+      const packageName = separator >= 0 ? release.name.slice(separator + 1) : release.name;
+      for (const node of packageScopeNodes) {
+        node.textContent = scope;
+      }
+      for (const node of packageNameNodes) {
+        node.textContent = packageName;
       }
     }
 
