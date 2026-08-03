@@ -820,6 +820,22 @@ pre {
   font: 11px/1.2 var(--mono);
 }
 
+.command-aliases {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font: 10px/1.5 var(--mono);
+}
+
+.command-aliases span {
+  margin-right: 10px;
+  color: var(--blue);
+  letter-spacing: 0.08em;
+}
+
+.command-aliases code {
+  color: var(--ink-deep);
+}
+
 .docs-block {
   background: var(--paper);
   border-bottom: 1px solid var(--line);
