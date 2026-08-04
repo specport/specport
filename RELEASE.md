@@ -48,6 +48,34 @@ npx --no-install specport --version
 npx --no-install specport skill list --json
 ```
 
+### Automated publishing with npm trusted publishing
+
+The repository includes a tag-only workflow at
+`.github/workflows/publish.yml`. It runs the full package gate and publishes
+through GitHub Actions OIDC, so no long-lived npm token or OTP is stored in
+the repository.
+
+Before the first automated release, open the package settings on npmjs.com and
+add a **Trusted Publisher** with these values:
+
+- provider: GitHub Actions;
+- organization or user: `specport`;
+- repository: `specport`;
+- workflow filename: `publish.yml`;
+- allowed action: `npm publish`.
+
+After npm accepts that relationship, publish a validated version by tagging
+the matching package version and pushing the tag:
+
+```bash
+git tag v<version>
+git push origin v<version>
+```
+
+The workflow rejects a tag whose version does not equal `package.json` and
+publishes only from the exact tag commit. npm trusted publishing requires
+Node.js 22.14 or newer and npm 11.5.1 or newer in the workflow.
+
 ## GitHub Pages
 
 The static site and Pages workflow live in the separate
