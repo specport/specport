@@ -37,7 +37,14 @@ npm install --save-dev @specport/specport
 npx --no-install specport coverage
 ```
 
-The executable remains `specport`:
+The package exposes both `spec` and `specport` executables:
+
+```bash
+spec --version
+spec coverage
+```
+
+`specport` remains available as the backwards-compatible spelling:
 
 ```bash
 specport --version
@@ -265,6 +272,12 @@ specport pull owner/repo@v1.2.0:specs/SPEC.md \
   --receipt .specport/pulls/owner-repo.json
 ```
 
+The same pull is also available as `spec pull`:
+
+```bash
+spec pull owner/repo@v1.2.0:specs/SPEC.md --out SPEC.md
+```
+
 Catalog pages may also provide a commit-pinned GitHub file URL:
 
 ```bash
@@ -272,6 +285,8 @@ specport pull https://github.com/owner/repo/blob/<40-character-commit>/specs/SPE
   --out SPEC.md \
   --receipt .specport/pulls/owner-repo.json
 ```
+
+The same exact-commit URL form is accepted from `raw.githubusercontent.com`.
 
 Branch or tag URLs are rejected when their ref and file path would be
 ambiguous. Use the `owner/repo@ref:path` form when you intentionally want a
@@ -416,7 +431,7 @@ in [`RELEASE.md`](RELEASE.md).
 
 ## Status
 
-SpecPort `0.1.1` is published on npm and is the current source version. The
+SpecPort `0.1.2` is published on npm and is the current source version. The
 current proven wedge is deterministic final-tree review coverage; repository discovery,
 source-preserving authoring, spec checks, contract validation, GitHub pulls,
 repository mapping, repo-to-spec packets, cover/remix/build handoffs, and
