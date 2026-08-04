@@ -4,6 +4,13 @@ All notable changes to SpecPort are recorded here. The project follows
 semantic-versioning intent, but a version is not considered released until the
 exact npm artifact and clean-consumer smoke test pass.
 
+## 0.1.2 - exact GitHub pulls
+
+- Added the literal `spec` executable alongside the existing `specport` name.
+- Accepted commit-pinned `raw.githubusercontent.com` sources and rejected URL
+  traversal, encoded separators, queries, and fragments before network access.
+- Added package-gate coverage for both published executable names.
+
 ## 0.1.1 - corrective patch
 
 - Corrected the published package repository metadata to the canonical

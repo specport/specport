@@ -220,6 +220,20 @@ function looksLikeUrl(source: string): boolean {
 }
 
 function parseGitHubSpecUrl(source: string): GitHubSpecReference {
+  const rawPath =
+    /^[A-Za-z][A-Za-z\d+.-]*:\/\/[^/?#]*(\/[^?#]*)?/u.exec(source)?.[1] ?? '';
+  const rawSegments = rawPath.split('/').slice(1);
+  if (
+    rawSegments.some(
+      (segment) =>
+        segment === '.' || segment === '..' || /%(?:2e|2f|5c)/iu.test(segment),
+    )
+  ) {
+    throw new GitHubSpecPullError(
+      'unsafe-path',
+      'GitHub spec URLs must use a relative POSIX path without traversal or encoded separators.',
+    );
+  }
   let url: URL;
   try {
     url = new URL(source);

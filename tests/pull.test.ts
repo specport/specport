@@ -40,6 +40,34 @@ describe('GitHub spec pull', () => {
     });
   });
 
+  it('parses a commit-pinned raw.githubusercontent.com URL', () => {
+    const source = `https://raw.githubusercontent.com/acme/ledger/${commit}/docs/SPEC.md`;
+    expect(parseGitHubSpecReference(source)).toEqual({
+      source,
+      canonicalSource: `acme/ledger@${commit}:docs/SPEC.md`,
+      owner: 'acme',
+      repository: 'ledger',
+      ref: commit,
+      path: 'docs/SPEC.md',
+    });
+  });
+
+  it.each([
+    `https://github.com/acme/ledger/blob/${commit}/SPEC.md?download=1`,
+    `https://github.com/acme/ledger/blob/${commit}/SPEC.md#readme`,
+    `https://github.com/acme/ledger/blob/${commit}/docs/%2e%2e/SECRET.md`,
+    `https://github.com/acme/ledger/blob/${commit}/docs/%`,
+  ])(
+    'rejects unsafe or ambiguous GitHub URLs before any request: %s',
+    (source) => {
+      expect(() => parseGitHubSpecReference(source)).toThrowError(
+        expect.objectContaining<Partial<GitHubSpecPullError>>({
+          code: expect.stringMatching(/^(?:invalid-source|unsafe-path)$/u),
+        }),
+      );
+    },
+  );
+
   it('rejects ambiguous branch URLs instead of guessing where ref ends', () => {
     expect(() =>
       parseGitHubSpecReference(

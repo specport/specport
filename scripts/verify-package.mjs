@@ -84,6 +84,12 @@ try {
       'Published CLI unexpectedly declares runtime dependencies.',
     );
   }
+  if (
+    installedManifest.bin?.spec !== 'dist/cli.js' ||
+    installedManifest.bin?.specport !== 'dist/cli.js'
+  ) {
+    throw new Error('Published package must expose both spec and specport commands.');
+  }
 
   const installedCli = join(installedRoot, 'dist', 'cli.js');
   const lifecycleSchema = JSON.parse(
