@@ -28,6 +28,30 @@ describe('GitHub spec pull', () => {
     );
   });
 
+  it('parses a commit-pinned GitHub blob URL without changing its source evidence', () => {
+    const source = `https://github.com/acme/ledger/blob/${commit}/docs/SPEC.md`;
+    expect(parseGitHubSpecReference(source)).toEqual({
+      source,
+      canonicalSource: `acme/ledger@${commit}:docs/SPEC.md`,
+      owner: 'acme',
+      repository: 'ledger',
+      ref: commit,
+      path: 'docs/SPEC.md',
+    });
+  });
+
+  it('rejects ambiguous branch URLs instead of guessing where ref ends', () => {
+    expect(() =>
+      parseGitHubSpecReference(
+        'https://github.com/acme/ledger/blob/release/v2/docs/SPEC.md',
+      ),
+    ).toThrowError(
+      expect.objectContaining<Partial<GitHubSpecPullError>>({
+        code: 'invalid-ref',
+      }),
+    );
+  });
+
   it.each([
     'acme/ledger@main:../SECRET.md',
     'acme/ledger@main:docs/../../SECRET.md',
@@ -129,6 +153,47 @@ describe('GitHub spec pull', () => {
         ({ init }) => init.headers.Accept === 'application/vnd.github+json',
       ),
     ).toBe(true);
+  });
+
+  it('pulls an exact file from a commit-pinned GitHub URL', async () => {
+    const rawContent = '# Ledger contract from a URL\n';
+    const source = `https://github.com/acme/ledger/blob/${commit}/SPEC.md`;
+    const fetcher: GitHubSpecFetch = async (url) => {
+      const parsed = new URL(url);
+      if (parsed.pathname === '/repos/acme/ledger') {
+        return jsonResponse({
+          full_name: 'acme/ledger',
+          html_url: 'https://github.com/acme/ledger',
+          license: { spdx_id: 'MIT', name: 'MIT License' },
+        });
+      }
+      if (parsed.pathname === `/repos/acme/ledger/commits/${commit}`) {
+        return jsonResponse({ sha: commit });
+      }
+      if (parsed.pathname === '/repos/acme/ledger/contents/SPEC.md') {
+        expect(parsed.searchParams.get('ref')).toBe(commit);
+        return jsonResponse({
+          type: 'file',
+          path: 'SPEC.md',
+          sha: 'file-sha',
+          encoding: 'base64',
+          content: encodeBase64(rawContent),
+        });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    const result = await pullGitHubSpec(source, {
+      fetch: fetcher,
+      apiBaseUrl: 'https://api.github.test',
+    });
+
+    expect(result.rawContent).toBe(rawContent);
+    expect(result.receipt.source).toBe(source);
+    expect(result.receipt.canonicalSource).toBe(
+      `acme/ledger@${commit}:SPEC.md`,
+    );
+    expect(result.receipt.commit).toBe(commit);
   });
 
   it('defaults the path and does not execute content or repository code', async () => {

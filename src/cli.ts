@@ -1087,12 +1087,12 @@ function parsePullArgs(args: string[]): Options {
   }
   if (positional.length !== 1)
     throw new UsageError(
-      'pull requires one GitHub source in owner/repo@ref[:path] form.',
+      'pull requires one GitHub source in owner/repo@ref[:path] or commit-pinned HTTPS URL form.',
     );
   const source = positional[0];
   if (!source)
     throw new UsageError(
-      'pull requires one GitHub source in owner/repo@ref[:path] form.',
+      'pull requires one GitHub source in owner/repo@ref[:path] or commit-pinned HTTPS URL form.',
     );
   options.source = source;
   return options;
@@ -2504,7 +2504,7 @@ function helpText(): string {
 Usage:
   specport coverage [path] [options]
   specport review --quick [path] [options]  (legacy alias)
-  specport pull <owner/repo@ref[:path]> [--out SPEC.md] [--receipt FILE] [--json] [--force]
+  specport pull <owner/repo@ref[:path] | https://github.com/.../blob/<commit>/path> [--out SPEC.md] [--receipt FILE] [--json] [--force]
   specport spec create <input> [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
   specport spec check <SPEC.md> [--json] [--write REPORT]
   specport spec discover [path] [--out SPEC.md] [--json] [--force] [--generated-at ISO-8601]
@@ -2544,7 +2544,7 @@ Spec workflows:
   spec remix      create a lineage-preserving draft with an explicit change set
   spec build      create a human-gated implementation handoff; it does not generate code
   spec validate    validate a human-owned product contract before implementation
-  pull            fetch one licensed spec from GitHub at a resolved commit; never executes repository code
+  pull            fetch one licensed spec from GitHub at a resolved commit or commit-pinned URL; never executes repository code
   skill list       list the packaged agent playbooks
   skill export     copy one playbook to a host agent's skill directory
 
