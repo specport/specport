@@ -1,6 +1,6 @@
 # SpecPort
 
-## Catch review gaps before merge.
+## Your coding agent says it's done. Check the final tree.
 
 SpecPort is a local, deterministic npm CLI for the moment after an AI coding
 tool (or a person) finishes a change and before somebody approves or ships it.
@@ -9,7 +9,8 @@ or approved scope, so a clean-looking summary cannot hide an unreviewed file.
 
 The package also includes two agent skills for turning repository evidence into
 a human-owned contract and carrying that contract through implementation,
-verification, human taste review, and a shippable release handoff.
+verification, human taste review, and a shippable release handoff. That is
+optional workflow depth; the first useful check is coverage.
 
 SpecPort does not record prompts, call an AI model, replace a code reviewer, or
 pretend that a passing test proves a product is good.
@@ -20,11 +21,20 @@ receiver or approved scope covered. The spec, contract, and lifecycle surfaces
 extend that boundary, but they are not a substitute for an implementation
 runtime or human approval.
 
-## Install
+## Quick start
+
+```bash
+npx --yes @specport/specport@latest coverage
+```
+
+This first run inventories the final Git-visible tree. Add an approved scope or
+pinned review when you need a coverage verdict rather than an inventory.
+
+For a project-local install, keep the command in your development dependencies:
 
 ```bash
 npm install --save-dev @specport/specport
-npx --yes @specport/specport@latest coverage
+npx --no-install specport coverage
 ```
 
 The executable remains `specport`:
@@ -42,6 +52,23 @@ npm install --global @specport/specport
 
 SpecPort targets Node.js 20 or newer and has no runtime dependencies.
 
+## Why use it?
+
+Use SpecPort when a local review, agent handoff, or explicit scope was approved
+before the branch stopped moving. Git lists changed files. CI proves that checks
+ran. SpecPort binds the exact final tree to the review source or scope you
+approved and reports uncovered paths, weak identity, or unstable state instead
+of quietly calling the change complete.
+
+The result is a readable Markdown or JSON receipt that the next reviewer can
+inspect without replaying the whole agent conversation. Processing stays local
+by default; SpecPort does not upload source, prompts, transcripts, or
+credentials to a SpecPort service.
+
+If branch protection already requires a fresh, complete review on every final
+commit, SpecPort may be redundant. It is for the gap between an approval that
+already happened and the exact tree you are about to merge.
+
 ## The first-minute workflow
 
 From an existing repository, start with an inventory when you do not yet have
@@ -51,7 +78,7 @@ a receiver or approved scope:
 specport coverage
 ```
 
-This is deliberately an acquisition diagnostic. It reports the final tree but
+This is deliberately an inventory, not a proof. It reports the final tree but
 cannot infer intent or claim that a path is out of scope.
 
 When a local GitHuman review is the approval object, pin it and compare the
@@ -377,13 +404,16 @@ in [`RELEASE.md`](RELEASE.md).
 
 ## Status
 
-SpecPort is an npm-ready receiver-first release candidate with deterministic
-repository discovery, source-preserving draft authoring, spec readiness checks,
-contract-shape validation, a provenance-preserving GitHub spec pull, bounded
-static repository mapping, one-command repo-to-spec packets, lineage-aware
-cover/remix/build handoffs, and packaged agent playbook export. Public npm publication, a live receiver
-deployment, cross-platform validation, code-generating adapters, and repeated
-maintainer adoption are external or future gates; the project does not claim
-those are proven by local tests.
+SpecPort `0.1.0` is published on npm and the public website is live at
+<https://specport.github.io/>. The exact package version and registry tarball
+are checked during Pages deployment. The current proven wedge is deterministic
+final-tree review coverage; repository discovery, source-preserving authoring,
+spec checks, contract validation, GitHub pulls, repository mapping,
+repo-to-spec packets, cover/remix/build handoffs, and packaged agent playbooks
+are explicit extensions around that check.
+
+A passing local or CI result is still not a product approval. A live receiver,
+cross-platform command validation, code-generating adapters, and repeated
+maintainer adoption remain separate gates.
 
 More detail and the product contract are on the [project site](https://specport.github.io/).
