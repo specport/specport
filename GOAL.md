@@ -16,6 +16,56 @@ behaves like a reliable software distribution entry point without pretending
 that an unpublished package, an empty index, or a roadmap feature already
 exists.
 
+## Immediate catalog expansion goal
+
+The next product increment is a real, maintained public catalog of useful
+portable specs. A maintainer should not have to hand-format every card, detail
+page, download link, or search record. A bounded GitHub Action should discover
+public `SPEC.md` files, reject obvious noise, preserve source and license
+evidence, update the catalog repository, and generate the static data consumed
+by the public site.
+
+The desired visitor flow is:
+
+1. Open `https://specport.github.io/` and choose Browse or Search.
+2. Search and filter real catalog records by job, category, tags, stack,
+   compatibility, implementation state, effort, license, and freshness.
+3. Open a detail page with a concise summary, the honest implementation
+   boundary, verification evidence, provenance, license, and lineage.
+4. Read or download the exact `SPEC.md`, open its GitHub source, or copy an
+   exact-ref pull command.
+
+The desired maintainer flow is:
+
+1. Run the catalog discovery script locally or dispatch the scheduled GitHub
+   Action with an authenticated GitHub token.
+2. Let deterministic policy checks classify candidates as catalogable,
+   needs-review, rejected, or stale, with machine-readable reason codes.
+3. Generate a reviewable change or pull request in `specport/specs`; merging it
+   is the publication gate for new or changed external entries.
+4. Build one static catalog index, search index, detail artifact, and raw-spec
+   route from the repository source, then deploy the site automatically.
+
+Repository boundaries are explicit:
+
+- `specport/specport` owns the local CLI and the provenance-preserving pull
+  primitive. The requested ergonomic flow is `spec pull <url>`; because the
+  published npm executable is currently named `specport`, the compatible
+  package form is `specport pull <url>`. The implementation must either expose
+  an explicit `spec` alias or use the package name consistently, and must not
+  leave two subtly different pull behaviors.
+- `specport/specs` is the catalog source of truth. Its existing pack manifests,
+  `SPEC.md` files, contracts, covers, generated `catalog.json`, and static
+  assets remain the durable input/output model; imported GitHub candidates must
+  extend that model rather than create a second undocumented format.
+- The public site at `https://specport.github.io/` consumes the generated
+  catalog artifacts. A static site or Pages build must not require a catalog
+  server, account, analytics, or a shared runtime key.
+
+This goal is about making discovery and distribution real now. It does not
+change the human-owned intent, acceptance, verification, taste, licensing, or
+ship-authority boundaries of the core SpecPort product.
+
 ## Product identity
 
 SpecPort is a local, deterministic npm CLI for the moment after an AI coding
@@ -142,8 +192,11 @@ the website must use `unknown`, `human gate`, or `roadmap` rather than guessing.
 Discover feature is a separate, explicitly networked catalog that looks for
 usable specs on GitHub.
 
-An entry qualifies automatically only when both conditions are true at catalog
-sync time:
+### Discovery policy
+
+The initial eligibility policy remains deliberately narrow and versioned. An
+entry is a candidate only when all of these conditions are true at catalog sync
+time:
 
 1. The repository is public and has **more than 200 stars**. Exactly 200 stars
    does not qualify.
@@ -151,32 +204,119 @@ sync time:
    filename is `SPEC.md`. Each qualifying file is one catalog entry and the
    complete path is part of its identity, so a root `SPEC.md` and
    `specs/mobile/SPEC.md` are distinct entries in the same repository.
+3. The file can be fetched at an immutable commit, is within the configured
+   size limit, and is non-empty UTF-8 Markdown.
+4. The repository's license metadata is usable under the catalog's
+   redistribution policy. An unknown or incompatible license may remain a
+   source-only review record, but it must not be copied into the catalog as if
+   redistribution were authorized.
 
 The indexer should use GitHub code search to find candidates, then re-check
 repository metadata and the default-branch tree/content endpoint before writing
 an entry. Search results are only candidate evidence: the final record must
 contain a repository snapshot, default branch, commit SHA, file path, file SHA,
-star count, license declaration, GitHub repository URL, spec URL, and
-`indexedAt` timestamp. A record is removed or marked stale when a refresh can
-no longer verify the two qualification conditions.
+star count, license declaration, GitHub repository URL, exact spec URL,
+content digest, and `indexedAt` timestamp. A record is removed or marked stale
+when a refresh can no longer verify the policy.
+
+The usefulness filter is a transparent admission policy, not an AI popularity
+score. It must produce reason codes and retain the evidence used to decide:
+
+Every normalized display field must carry an origin of `observed`,
+`inferred-with-evidence`, or `unknown`. Inferred titles, tags, categories,
+compatibility, or summaries must point to the source text or repository
+metadata that supports them; unknown must remain visible instead of being
+filled with plausible-sounding text.
+
+- `catalogable`: the spec has a recognizable product or project intent, a
+  concrete user/job or outcome, constraints or non-goals, scenario-based
+  acceptance criteria, repeatable verification, and an explicit human or
+  release boundary. Required headings and content checks should be deterministic
+  and configurable.
+- `needs-review`: the source is plausibly useful but a required field is
+  ambiguous, incomplete, generated-looking, or outside the automatic policy.
+  It may appear in a maintainer review queue, never as a featured result by
+  accident.
+- `rejected`: the file is empty, a placeholder, a prompt dump, unrelated to a
+  buildable product/project, inaccessible, unsafe to redistribute, or fails a
+  hard policy check. The rejection reason must be recorded for auditability.
+- `stale`: a previously accepted source changed, disappeared, lost eligibility,
+  or could not be refreshed. Stale records must not silently keep old content
+  looking current.
+
+An optional model-assisted review may suggest tags or a classification, but it
+must not invent metadata, rewrite the source, or publish without the same
+deterministic checks and maintainer gate. GitHub stars are an eligibility fact,
+not a SpecPort quality, safety, or usefulness score.
 
 The catalog is a discovery layer, not an approval layer. It must not execute
 repository code, silently copy or rewrite the spec, claim that the spec is
-correct, or turn GitHub stars into a quality score. A missing GitHub license is
-shown as `unknown` with a review warning; it is not hidden or presented as
-permission to redistribute. Every entry links to the exact GitHub file and can
-offer an exact-ref pull command such as:
+correct, or turn a source snapshot into a ship recommendation. A missing GitHub
+license is shown as `unknown` with a review warning; it is not hidden or
+presented as permission to redistribute. If raw source copying is allowed, the
+catalog preserves the exact bytes, commit, path, file SHA, content digest,
+attribution, and original license. Otherwise it links to the source and keeps
+the entry source-only.
+
+The implementation is deliberately honest about GitHub's search boundary:
+GitHub code search exposes at most 1,000 results for one query. The scheduled
+workflow records the result cap, candidate/recheck caps, incomplete-search
+state, and rate-limit headers. A complete run may replace
+`data/github-catalog.json`; an incomplete or rate-limited run writes only
+`data/github-discovery-review.json`, so the public website continues to consume
+the last complete catalog rather than presenting a partial scan as current.
+The scheduled seed query is contract-shaped (`filename:SPEC.md "## Intent"
+"## Acceptance" "## Verification"`) and can be overridden for narrower
+shards; the filename-only query remains useful as an explicit broad review
+scan.
+
+Every accepted entry links to the exact GitHub file and can offer an exact-ref
+pull command such as:
 
 ~~~bash
 specport pull owner/repo@<commit>:path/to/SPEC.md
 ~~~
 
-The first implementation should generate a deterministic `catalog.json` from a
-bounded, authenticated GitHub Action on a scheduled refresh, preserve the
-source snapshot in each record, deduplicate by `owner/repo:path`, and expose
-the last successful sync time and incomplete/rate-limited state. Until that
-real index exists, the website must keep Discover labeled `roadmap` and must
-not render a fake search box, result count, or popularity metric.
+The pull surface should also accept the catalog's copyable GitHub file URL
+(`https://github.com/<owner>/<repo>/blob/<ref>/<path>`) when it can resolve
+that URL to one immutable commit. The catalog should prefer a commit-pinned
+URL or locator so branch movement cannot silently change what a user pulls.
+Unsupported or ambiguous URL forms must fail with a repairable message rather
+than guessing where the ref ends and the path begins.
+
+The catalog identity is `owner/repository:path`; a stable record id must be
+derived from that identity rather than from a display title. A refresh must
+deduplicate repeated search hits, detect source changes by commit and digest,
+retain first-seen and last-seen evidence, and expose the last successful sync,
+policy version, rate-limit state, and incomplete-search state.
+
+### Automation and generated artifacts
+
+The `specport/specs` workflow must support both a scheduled refresh and manual
+dispatch. It should paginate or checkpoint GitHub search, honor rate limits,
+fail closed on incomplete discovery, and never execute a checked-out candidate
+repository or run commands from an imported `SPEC.md`. The workflow should
+write candidates and generated artifacts in a reviewable branch or pull
+request; merging is the human publication gate for new external content.
+
+The deterministic build should generate, at minimum:
+
+- a top-level `catalog.json` containing schema version, policy version,
+  generation time, source snapshot, counts, filter facets, sync health, and
+  compact records;
+- one detail record per accepted or source-only entry with the full manifest,
+  provenance, evidence, license state, source links, digests, and exact pull
+  command;
+- a safe raw `SPEC.md` download route only where the license policy permits
+  redistribution, otherwise a source link and clear download boundary;
+- a compact browser search index with normalized searchable fields so search
+  and filters remain fast without a server; and
+- static detail pages or equivalent no-JavaScript-readable routes generated
+  from the same records, so adding a pack never requires hand-editing a page.
+
+Generated data must be deterministic for a fixed source commit and generated
+timestamp, stable under repeated runs, schema-validated, and safe against path
+traversal, untrusted HTML, Markdown injection, and arbitrary URL schemes.
 
 ## Website contract
 
@@ -210,6 +350,7 @@ The public site should use task-oriented navigation, not only internal essay
 anchors:
 
 - Overview
+- Browse / Search specs
 - Install / Quick start
 - Documentation
 - Commands
@@ -234,6 +375,39 @@ If there is not yet a real public spec corpus, do not render a fake search box,
 fake package counts, fake downloads, fake maintainers, fake testimonials, or a
 fake browse-registry flow. Link to real examples and source files until a real
 index exists.
+
+### Catalog browse and detail contract
+
+Once the generated index exists, the site must expose a real Browse/Search
+surface rather than a decorative marketplace imitation:
+
+- Search must cover the normalized title, tagline, summary, user/job, outcome,
+  tags, category, compatibility, implementation state, and provenance fields.
+- Filters must be data-driven from the catalog facets and include category,
+  tags, stack or runtime, agent compatibility, starter/reference state, effort,
+  license state, catalog status, and updated time where present. Empty results
+  must explain which filters are active and provide a clear reset action.
+- Sorting may include featured, recently updated, name, and verified/reference
+  state. It must not imply popularity unless a sourced metric is explicitly
+  present and labeled as such.
+- Each card must show enough context to choose a result: name, one-line job or
+  outcome, category, useful tags, state, verification boundary, license, and
+  updated date. It must link to a detail page generated from the same record.
+- Each detail page must show the complete source identity, exact commit and
+  path, source and raw-file links, license and attribution requirement,
+  catalog decision and reason, implementation boundary, compatibility, effort,
+  verification evidence, lineage, and a copyable exact-ref pull command.
+- Download must mean one of two honest things: download the catalog's exact
+  preserved `SPEC.md` when redistribution is allowed, or open the original
+  source when it is source-only. A detail page must never silently change the
+  spec while formatting it for display.
+- The generated pages must be accessible on mobile and keyboard, safe to render
+  from untrusted Markdown, readable when JavaScript is unavailable, and fast
+  enough that search and filter changes feel immediate for the full index.
+
+Adding one accepted entry must update cards, facets, search, detail links, raw
+download or source links, and the catalog count from the generated data. No
+hand-maintained duplicate list is allowed.
 
 ### Reference principles
 
@@ -352,19 +526,21 @@ agent playbooks. Keep these commands and artifacts honest and verified.
 
 ### Next product work
 
-The next product work may unify the spec format, improve exact-ref GitHub
-discovery and local inspection, add carefully bounded mapping adapters, and
-strengthen cover/remix and agent workflows. Each increment requires a fixture,
-readable output, explicit provenance, and a human boundary.
+The next product work is the catalog expansion in this goal: a policy-driven
+GitHub scanner, usefulness/review classification, candidate update workflow,
+stable static artifacts, and a fast Browse/Search/detail experience. The
+existing `specport/specs` pack compiler and the existing exact-ref `pull`
+primitive should be extended rather than replaced. Each increment requires a
+fixture, readable output, explicit provenance, and a human boundary.
 
 ### Future ecosystem work
 
-The first ecosystem increment is the GitHub SPEC catalog described above:
-bounded metadata discovery, exact-file provenance, and a truthful static
-Discover surface. After that corpus is real, public search, manifest-based
-discovery, shared indexes, ratings, reputation, verified build signals,
-code-generating adapters, and broad public sharing can be evaluated. Do not
-build those surfaces merely to make the website resemble a registry.
+After the catalog is real, manifest-based discovery beyond GitHub, shared
+indexes, ratings, reputation, verified build signals, code-generating adapters,
+and broad public sharing can be evaluated. Do not treat the catalog's
+eligibility or structural usefulness checks as universal quality assurance, and
+do not build reputation or popularity surfaces merely to make the website
+resemble a registry.
 
 ## Acceptance gates
 
@@ -390,6 +566,22 @@ The goal is not complete until all applicable gates have evidence.
 - A catalog refresh is idempotent, deduplicates multiple paths correctly,
   surfaces GitHub rate-limit/incomplete-search state, and never executes
   repository code.
+- A broad live search records GitHub's 1,000-result ceiling and bounds metadata
+  re-checks; an incomplete or rate-limited run creates review output without
+  replacing the canonical current report or writing new source snapshots.
+- Catalog fixtures cover catalogable, needs-review, rejected, stale,
+  source-only, missing-license, placeholder, malformed-Markdown, duplicate-hit,
+  changed-commit, and unsafe-URL cases with stable reason codes.
+- A fixed GitHub fixture set produces byte-stable `catalog.json`, detail records,
+  search fields, source links, and pull commands; adding or changing one source
+  updates every dependent artifact without hand-editing generated pages.
+- The scheduled/manual workflow uses least-privilege permissions, records its
+  policy and sync state, opens a reviewable update for new external content,
+  and does not publish incomplete or rate-limited results as current.
+- `specport pull` accepts the catalog's exact source locator and the supported
+  GitHub URL form, resolves to an immutable commit, preserves the raw spec and
+  provenance receipt, fails closed on an unusable license, and executes no
+  repository code.
 
 ### Website behavior
 
@@ -412,6 +604,13 @@ The goal is not complete until all applicable gates have evidence.
   or copying commands.
 - The site contains no fake search, fake metrics, fake adoption, fake package
   availability, or fake terminal evidence.
+- With a real catalog, Browse/Search returns the committed records, filters by
+  the generated facets, sorts only by labeled fields, and updates counts and
+  empty states without a server or hand-maintained duplicate index.
+- Every accepted detail page exposes the exact `SPEC.md` source, license and
+  attribution state, catalog decision/reason, implementation boundary,
+  verification evidence, raw download or source-only boundary, and a tested
+  exact-ref pull command.
 - A copy/status review records the source or fixture for every visible number,
   terminal result, package claim, maintainer claim, and adoption statement; an
   unsupported claim blocks the release.
@@ -435,6 +634,13 @@ SpecPort is not initially:
 - a hosted SaaS marketplace requiring a SpecPort account;
 - a package manager that executes arbitrary pulled repositories;
 - a claim that AST structure reveals complete product intent;
+- an objective judge of whether a spec is good, safe, commercially viable, or
+  correct. The automatic filter is a catalog admission signal with evidence,
+  not endorsement;
+- a mechanism for copying unlicensed or ambiguous source content into the
+  repository, or for hiding attribution and source changes;
+- an LLM-generated catalog description that silently rewrites the source or
+  invents implementation, popularity, customer, or verification claims;
 - a public registry with ratings or popularity proof before a real corpus and
   repeated external use exist. The first catalog may show GitHub's star-count
   snapshot only as an eligibility fact, never as a SpecPort quality score;
@@ -446,6 +652,15 @@ SpecPort succeeds when a new visitor can reach the product’s first useful acti
 without decoding a manifesto, install or run the current CLI through a truthful
 path, find the relevant documentation and source, understand what each current
 surface proves, and distinguish shipped behavior from roadmap work.
+
+For this catalog increment, success additionally means that a maintainer can
+run or dispatch one bounded discovery workflow and get a deterministic,
+reviewable update to `specport/specs`, while a visitor can browse, search, and
+filter the resulting records quickly, inspect the evidence and licensing
+boundary, read or download the exact `SPEC.md` where allowed, and pull the same
+immutable source with a provenance receipt. A new accepted record must flow
+through the index, facets, detail page, download/source link, and pull command
+without hand-editing duplicate website data.
 
 The website is complete only when it is operationally useful, distribution
 truthful, visually coherent, accessible, deployed, and supported by current

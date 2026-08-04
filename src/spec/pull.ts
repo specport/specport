@@ -141,9 +141,9 @@ export class GitHubSpecPullError extends Error {
 }
 
 /**
- * Parse owner/repo@ref:path. A missing path means SPEC.md. The source is not
- * normalized or silently trimmed: the receipt can therefore prove exactly
- * what the caller requested.
+ * Parse owner/repo@ref:path or a commit-pinned GitHub file URL. A missing path
+ * means SPEC.md. The source is not normalized or silently trimmed: the
+ * receipt can therefore prove exactly what the caller requested.
  */
 export function parseGitHubSpecReference(source: string): GitHubSpecReference {
   if (typeof source !== 'string' || source.length === 0) {
@@ -158,6 +158,8 @@ export function parseGitHubSpecReference(source: string): GitHubSpecReference {
       'GitHub spec source must not have leading or trailing whitespace.',
     );
   }
+
+  if (looksLikeUrl(source)) return parseGitHubSpecUrl(source);
 
   const at = source.indexOf('@');
   if (at <= 0) {
@@ -211,6 +213,105 @@ export function parseGitHubSpecReference(source: string): GitHubSpecReference {
     ref,
     path,
   };
+}
+
+function looksLikeUrl(source: string): boolean {
+  return /^[A-Za-z][A-Za-z\d+.-]*:\/\//u.test(source);
+}
+
+function parseGitHubSpecUrl(source: string): GitHubSpecReference {
+  let url: URL;
+  try {
+    url = new URL(source);
+  } catch {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub spec URL is not a valid URL.',
+    );
+  }
+
+  if (url.protocol !== 'https:' || url.search !== '' || url.hash !== '') {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub spec URLs must use HTTPS and must not contain a query or fragment.',
+    );
+  }
+
+  const segments = decodeUrlPath(url.pathname);
+  const hostname = url.hostname.toLowerCase();
+  const isGitHubBlob =
+    hostname === 'github.com' || hostname === 'www.github.com';
+  const isGitHubRaw = hostname === 'raw.githubusercontent.com';
+  if (!isGitHubBlob && !isGitHubRaw) {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub spec URLs must use github.com or raw.githubusercontent.com.',
+    );
+  }
+
+  const minimumSegments = isGitHubBlob ? 5 : 4;
+  if (
+    segments.length < minimumSegments ||
+    segments.some((segment) => segment === '')
+  ) {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub spec URL must identify owner, repository, an exact commit, and a file path.',
+    );
+  }
+
+  const owner = segments[0] ?? '';
+  const repository = segments[1] ?? '';
+  const refIndex = isGitHubBlob ? 3 : 2;
+  const ref = segments[refIndex] ?? '';
+  const pathIndex = isGitHubBlob ? 4 : 3;
+  if (isGitHubBlob && segments[2] !== 'blob') {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub web URLs must use the /blob/<commit>/<path> form.',
+    );
+  }
+  if (
+    !owner ||
+    !repository ||
+    !isGitHubName(owner) ||
+    !isGitHubName(repository)
+  ) {
+    throw new GitHubSpecPullError(
+      'invalid-source',
+      'GitHub owner and repository names contain unsupported characters.',
+    );
+  }
+  if (!/^[0-9a-f]{40}$/iu.test(ref)) {
+    throw new GitHubSpecPullError(
+      'invalid-ref',
+      'GitHub file URLs must pin a 40-character commit SHA; use owner/repo@ref:path for a branch or tag.',
+    );
+  }
+
+  const path = segments.slice(pathIndex).join('/');
+  validateRef(ref);
+  validatePath(path);
+  return {
+    source,
+    canonicalSource: `${owner}/${repository}@${ref}:${path}`,
+    owner,
+    repository,
+    ref,
+    path,
+  };
+}
+
+function decodeUrlPath(pathname: string): string[] {
+  const rawSegments = pathname.split('/').slice(1);
+  try {
+    return rawSegments.map((segment) => decodeURIComponent(segment));
+  } catch {
+    throw new GitHubSpecPullError(
+      'unsafe-path',
+      'GitHub spec URL contains invalid percent encoding.',
+    );
+  }
 }
 
 /**

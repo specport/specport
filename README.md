@@ -265,6 +265,18 @@ specport pull owner/repo@v1.2.0:specs/SPEC.md \
   --receipt .specport/pulls/owner-repo.json
 ```
 
+Catalog pages may also provide a commit-pinned GitHub file URL:
+
+```bash
+specport pull https://github.com/owner/repo/blob/<40-character-commit>/specs/SPEC.md \
+  --out SPEC.md \
+  --receipt .specport/pulls/owner-repo.json
+```
+
+Branch or tag URLs are rejected when their ref and file path would be
+ambiguous. Use the `owner/repo@ref:path` form when you intentionally want a
+branch or tag resolved by GitHub at pull time.
+
 The pull is read-only until you choose an output path. A receipt is written
 next to `--out` by default, or at `--receipt` when supplied. A missing license,
 unsafe path, missing file, or unresolved GitHub ref is a hold signal.
@@ -404,13 +416,11 @@ in [`RELEASE.md`](RELEASE.md).
 
 ## Status
 
-SpecPort `0.1.1` is published on npm and the public website is live at
-<https://specport.github.io/>. The exact package version and registry tarball
-are checked during Pages deployment. The current proven wedge is deterministic
-final-tree review coverage; repository discovery, source-preserving authoring,
-spec checks, contract validation, GitHub pulls, repository mapping,
-repo-to-spec packets, cover/remix/build handoffs, and packaged agent playbooks
-are explicit extensions around that check.
+SpecPort `0.1.1` is published on npm and is the current source version. The
+current proven wedge is deterministic final-tree review coverage; repository discovery,
+source-preserving authoring, spec checks, contract validation, GitHub pulls,
+repository mapping, repo-to-spec packets, cover/remix/build handoffs, and
+packaged agent playbooks are explicit extensions around that check.
 
 A passing local or CI result is still not a product approval. A live receiver,
 cross-platform command validation, code-generating adapters, and repeated
