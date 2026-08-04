@@ -294,7 +294,7 @@ The package identity is:
 - version: read from package.json; never hard-code it in site copy;
 - license: MIT;
 - engine: Node.js >=20;
-- repository: https://github.com/stancsz/specport;
+- repository: https://github.com/specport/specport;
 - homepage: https://specport.github.io/.
 
 publishConfig.access or a successful local package build does not prove public

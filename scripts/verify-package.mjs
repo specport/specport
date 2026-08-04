@@ -62,6 +62,23 @@ try {
       'Installed package version does not match the workspace package.',
     );
   }
+  if (
+    installedManifest.repository?.type !== 'git' ||
+    installedManifest.repository?.url !==
+      'git+https://github.com/specport/specport.git'
+  ) {
+    throw new Error(
+      'Installed package does not point to the canonical GitHub repository.',
+    );
+  }
+  if (
+    installedManifest.bugs?.url !==
+    'https://github.com/specport/specport/issues'
+  ) {
+    throw new Error(
+      'Installed package does not point to the canonical GitHub issue tracker.',
+    );
+  }
   if (Object.keys(installedManifest.dependencies ?? {}).length !== 0) {
     throw new Error(
       'Published CLI unexpectedly declares runtime dependencies.',

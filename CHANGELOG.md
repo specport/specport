@@ -4,7 +4,15 @@ All notable changes to SpecPort are recorded here. The project follows
 semantic-versioning intent, but a version is not considered released until the
 exact npm artifact and clean-consumer smoke test pass.
 
-## 0.1.0 - pending publication
+## 0.1.1 - corrective patch
+
+- Corrected the published package repository metadata to the canonical
+  `specport/specport` URL.
+- Published the coverage-first README and clarified inventory versus proof.
+- Fixed CLI entrypoint detection when npm invokes the package through a Unix
+  symlinked bin.
+
+## 0.1.0 - published
 
 - Added `spec bundle`, a draft-only one-command repository-to-spec packet with
   a grounded `SPEC.md`, bounded map, evidence ledger, structural check, output

@@ -9,7 +9,7 @@ development line is `0.1.x`.
 
 Do not open a public issue containing exploit details, credentials, private
 source, or personal data. Use a private GitHub Security Advisory for
-`stancsz/specport` when the repository supports it, or contact the maintainer
+`specport/specport` when the repository supports it, or contact the maintainer
 through the private repository channel. Include the affected version or
 commit, a minimal reproduction, impact, and any safe mitigation.
 

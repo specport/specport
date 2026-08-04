@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { realpathSync } from 'node:fs';
 import {
   access,
   cp,
@@ -2584,9 +2585,16 @@ class OutputError extends Error {
   }
 }
 
-const isEntrypoint =
-  process.argv[1] &&
-  fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+const cliPath = fileURLToPath(import.meta.url);
+const isEntrypoint = (() => {
+  if (!process.argv[1]) return false;
+  if (cliPath === resolve(process.argv[1])) return true;
+  try {
+    return cliPath === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+})();
 if (isEntrypoint) {
   runCli(process.argv.slice(2))
     .then((code) => {

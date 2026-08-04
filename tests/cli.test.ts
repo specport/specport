@@ -33,7 +33,7 @@ describe('SpecPort CLI contract', () => {
     const result = await invoke(['--version']);
 
     expect(result.code).toBe(0);
-    expect(result.stdout).toBe('0.1.0\n');
+    expect(result.stdout).toBe('0.1.1\n');
     expect(result.stderr).toBe('');
   });
 

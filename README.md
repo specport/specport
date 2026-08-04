@@ -404,7 +404,7 @@ in [`RELEASE.md`](RELEASE.md).
 
 ## Status
 
-SpecPort `0.1.0` is published on npm and the public website is live at
+SpecPort `0.1.1` is published on npm and the public website is live at
 <https://specport.github.io/>. The exact package version and registry tarball
 are checked during Pages deployment. The current proven wedge is deterministic
 final-tree review coverage; repository discovery, source-preserving authoring,
